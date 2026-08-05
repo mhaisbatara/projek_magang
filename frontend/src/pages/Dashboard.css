@@ -1,0 +1,101 @@
+@import '../styles/theme.css';
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-page);
+}
+
+.dashboard-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.dashboard-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.dashboard-heading h1 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dashboard-heading p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background: var(--accent-blue);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: #274fc4;
+}
+
+.btn-outline-teal {
+  background: var(--accent-teal-soft);
+  color: var(--accent-teal);
+}
+.btn-outline-teal:hover {
+  background: #c7f0e9;
+}
+
+.btn-outline {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  border-color: var(--border-soft);
+}
+.btn-outline:hover {
+  background: var(--border-soft);
+}
+
+.dashboard-error {
+  background: var(--accent-red-soft);
+  color: var(--accent-red);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin: 0;
+}
+
+.kpi-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dashboard-panels {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
