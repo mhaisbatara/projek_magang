@@ -1,0 +1,55 @@
+@import '../styles/theme.css';
+
+.kpi-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 18px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.kpi-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.kpi-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpi-icon-blue { background: var(--accent-blue-soft); color: var(--accent-blue); }
+.kpi-icon-teal { background: var(--accent-teal-soft); color: var(--accent-teal); }
+.kpi-icon-red { background: var(--accent-red-soft); color: var(--accent-red); }
+.kpi-icon-orange { background: var(--accent-orange-soft); color: var(--accent-orange); }
+
+.kpi-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.kpi-badge-positive { background: var(--accent-teal-soft); color: var(--accent-teal); }
+.kpi-badge-warning { background: var(--accent-red-soft); color: var(--accent-red); }
+.kpi-badge-neutral { background: var(--border-soft); color: var(--text-secondary); }
+
+.kpi-label {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.kpi-value {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
