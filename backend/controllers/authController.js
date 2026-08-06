@@ -1,76 +1,153 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
-import { JWT_SECRET } from "../middleware/auth.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
-// --- REGISTER (Pendaftaran User Baru) ---
-async function register(req, res) {
-  const { username, password } = req.body;
-
-  // 1. Validasi input: Pastikan username dan password diisi
-  if (!username || !password) {
-    return res.status(400).json({ message: "Username dan password wajib diisi" });
-  }
-
+// =======================
+// REGISTER
+// =======================
+export const register = async (req, res) => {
   try {
-    // 2. Cek apakah username sudah terdaftar di database
-    const [existing] = await pool.query("SELECT id FROM user WHERE username = ?", [username]);
-    if (existing.length > 0) {
-      return res.status(400).json({ message: "Username sudah dipakai" });
+    const { nama, username, password } = req.body;
+
+    if (!nama || !username || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Semua field wajib diisi",
+      });
     }
 
-    // 3. Enkripsi (Hash) password menggunakan bcrypt
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password minimal 6 karakter",
+      });
+    }
 
-    // 4. Simpan user baru ke database
-    await pool.query(
-      "INSERT INTO user (username, password) VALUES (?, ?)",
-      [username, hashedPassword]
+    // Cek username
+    const [cek] = await pool.query(
+      "SELECT * FROM user_staff WHERE username = ?",
+      [username]
     );
 
-    return res.status(201).json({ message: "Registrasi berhasil, silakan login" });
+    if (cek.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Username sudah digunakan",
+      });
+    }
+
+    // Hash password
+    const hash = await bcrypt.hash(password, 10);
+
+    // Ambil id_user terakhir
+    const [lastUser] = await pool.query(
+      "SELECT id_user FROM user_staff ORDER BY id_user DESC LIMIT 1"
+    );
+
+    let idUser = "USR0001";
+
+    if (lastUser.length > 0) {
+      const nomor =
+        parseInt(lastUser[0].id_user.replace("USR", "")) + 1;
+
+      idUser = "USR" + nomor.toString().padStart(4, "0");
+    }
+
+    // Simpan user baru
+    await pool.query(
+      `INSERT INTO user_staff
+      (id_user, id_role, nama, username, password)
+      VALUES (?, ?, ?, ?, ?)`,
+      [
+        idUser,
+        "ROL0007",
+        nama,
+        username,
+        hash,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Register berhasil",
+    });
+
   } catch (err) {
-    console.error("Register Error:", err);
-    return res.status(500).json({ message: "Terjadi kesalahan server" });
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
-}
+};
 
-// --- LOGIN (Masuk Akun & Dapatkan Token JWT) ---
-async function login(req, res) {
-  const { username, password } = req.body;
-
-  // 1. Validasi input
-  if (!username || !password) {
-    return res.status(400).json({ message: "Username dan password wajib diisi" });
-  }
-
+// =======================
+// LOGIN
+// =======================
+export const login = async (req, res) => {
   try {
-    // 2. Cari user berdasarkan username
-    const [rows] = await pool.query("SELECT * FROM user WHERE username = ?", [username]);
+
+    const { username, password } = req.body;
+
+    const [rows] = await pool.query(
+      "SELECT * FROM user_staff WHERE username = ?",
+      [username]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Username tidak ditemukan",
+      });
+    }
+
     const user = rows[0];
 
-    // Jika user tidak ditemukan, atau password salah (dicek menggunakan bcrypt.compare)
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: "Username atau password salah" });
-    }
-
-    // 3. Buat JWT Token yang valid selama 1 hari (1d)
-    const token = jwt.sign(
-      { id: user.id, username: user.username },
-      JWT_SECRET,
-      { expiresIn: "1d" }
+    const cocok = await bcrypt.compare(
+      password,
+      user.password
     );
 
-    // 4. Kirim respon login sukses dengan tokennya
-    return res.json({
+    if (!cocok) {
+      return res.status(401).json({
+        success: false,
+        message: "Password salah",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id_user,
+        nama: user.nama,
+        role: user.id_role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    res.json({
+      success: true,
       message: "Login berhasil",
       token,
-      user: { id: user.id, username: user.username },
+      user: {
+        id: user.id_user,
+        nama: user.nama,
+        username: user.username,
+        role: user.id_role,
+      },
     });
-  } catch (err) {
-    console.error("Login Error:", err);
-    return res.status(500).json({ message: "Terjadi kesalahan server" });
-  }
-}
 
-export { register, login };
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+
+  }
+};

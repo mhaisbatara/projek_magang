@@ -1,86 +1,152 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import hero from "../assets/hero.png";
+import "../css/Register.css";
 
 export default function Register() {
-  // --- STATE FORM ---
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const { register } = useAuth(); // Mengambil fungsi registrasi global dari Context
+  const { register } = useAuth();
   const navigate = useNavigate();
 
-  // --- SUBMIT HANDLER ---
-  const handleSubmit = async (e) => {
+  const [form, setForm] = useState({
+    nama: "",
+    username: "",
+    password: "",
+  });
+
+  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const submit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+
     setLoading(true);
+    setError("");
 
     try {
-      // 1. Panggil API registrasi di backend
-      await register(username, password);
-      setSuccess("Registrasi berhasil, mengalihkan ke halaman login...");
-      
-      // 2. Alihkan otomatis ke halaman login setelah 1,2 detik
-      setTimeout(() => navigate("/login"), 1200);
+
+      await register(
+        form.nama,
+        form.username,
+        form.password
+      );
+
+      alert("Register berhasil");
+
+      navigate("/login");
+
     } catch (err) {
-      setError(err.response?.data?.message || "Gagal mendaftar. Silakan coba lagi.");
-    } finally {
-      setLoading(false);
+
+      setError(
+        err.response?.data?.message ||
+        "Register gagal"
+      );
+
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="auth-container">
-      {/* Kolom Kiri: Branding info */}
-      <div className="auth-brand">
-        <span className="auth-brand-eyebrow">Inventaris · Magang</span>
-        <h1>Satu akun, semua data barang.</h1>
-        <p>Buat akun untuk mulai mencatat inventaris dan mengelola data barang gudang.</p>
-      </div>
 
-      {/* Kolom Rapat: Form input */}
-      <div className="auth-panel">
-        <form onSubmit={handleSubmit} className="auth-card">
-          <h2>Buat akun baru</h2>
-          
-          {error && <p className="error-text">{error}</p>}
-          {success && <p className="success-text">{success}</p>}
+<div className="register-container">
 
-          <div className="form-field">
-            <label>Username</label>
-            <input 
-              type="text" 
-              value={username} 
-              onChange={(e) => setUsername(e.target.value)} 
-              required 
-            />
-          </div>
+<div className="register-box">
 
-          <div className="form-field">
-            <label>Password</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-              minLength={6} 
-            />
-          </div>
+<div className="register-right">
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Memproses..." : "Daftar"}
-          </button>
+<img src={hero} alt="" />
 
-          <p className="switch-text">
-            Sudah punya akun? <Link to="/login">Login</Link>
-          </p>
-        </form>
-      </div>
-    </div>
+</div>
+
+<div className="register-left">
+
+<h1>Sistem Klinik</h1>
+
+<p>Buat akun baru</p>
+
+{error &&
+
+<div className="error">
+
+{error}
+
+</div>
+
+}
+
+<form onSubmit={submit}>
+
+<input
+name="nama"
+placeholder="Nama Lengkap"
+value={form.nama}
+onChange={handleChange}
+required
+/>
+
+<input
+name="username"
+placeholder="Username"
+value={form.username}
+onChange={handleChange}
+required
+/>
+
+<input
+type={show ? "text" : "password"}
+name="password"
+placeholder="Password"
+value={form.password}
+onChange={handleChange}
+required
+/>
+
+<label className="remember">
+
+<input
+type="checkbox"
+onChange={() => setShow(!show)}
+/>
+
+Lihat Password
+
+</label>
+
+<button>
+
+{loading ? "Loading..." : "DAFTAR"}
+
+</button>
+
+</form>
+
+<div className="register-link">
+
+Sudah punya akun?
+
+<Link to="/login">
+
+Login
+
+</Link>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
   );
 }

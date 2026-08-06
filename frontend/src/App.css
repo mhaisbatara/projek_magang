@@ -1,0 +1,26 @@
+@import './styles/theme.css';
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+}
+
+.app-shell {
+  display: flex;
+  height: 100vh;
+  background: var(--bg-page);
+}
+
+.app-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

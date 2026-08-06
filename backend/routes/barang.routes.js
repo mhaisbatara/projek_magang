@@ -6,11 +6,11 @@ import {
   updateBarang,
   deleteBarang,
 } from "../controllers/barangController.js";
-import { authMiddleware } from "../middleware/auth.js";
+import auth from "../middleware/auth.js";
 
 const router = Router();
 
-router.use(authMiddleware);
+router.get("/", auth, getBarang);
 
 router.get("/", getBarang);
 router.get("/:id", getBarangById);
