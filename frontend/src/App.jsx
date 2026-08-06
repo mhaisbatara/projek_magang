@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Pendaftaranpasien from "./pages/Pendaftaranpasien";
+import PelayananMedis from "./pages/PelayananMedis";
 import "./App.css";
 
 function App() {
@@ -37,6 +38,19 @@ function App() {
                   <Sidebar activeKey="pelayanan" />
                   <main className="app-content">
                     <Pendaftaranpasien />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/medis"
+            element={
+              <ProtectedRoute>
+                <div className="app-shell">
+                  <Sidebar activeKey="medis" />
+                  <main className="app-content">
+                    <PelayananMedis />
                   </main>
                 </div>
               </ProtectedRoute>

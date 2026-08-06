@@ -1,0 +1,50 @@
+/* PelayananMedis.css */
+
+.card-examine {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-examine:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(50, 102, 240, 0.12), 0 8px 10px -6px rgba(50, 102, 240, 0.12);
+}
+
+/* Animations for new list items */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.antrian-item {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Pulse effect for currently calling queue number */
+@keyframes callPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(50, 102, 240, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(50, 102, 240, 0);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(50, 102, 240, 0);
+    transform: scale(1);
+  }
+}
+
+.tracking-wider {
+  animation: callPulse 2.5s infinite ease-in-out;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  background-color: var(--accent-blue-soft);
+  padding: 4px 16px;
+}

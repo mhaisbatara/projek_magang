@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import pasienRoutes from "./routes/pasienRoutes.js";
+import pendaftaranRoutes from "./routes/pendaftaranRoutes.js";
+import auth from "./middleware/auth.js";
 
 dotenv.config();
 
@@ -14,8 +16,9 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/pasien", pasienRoutes);
+app.use("/api/dashboard", auth, dashboardRoutes);
+app.use("/api/pasien", auth, pasienRoutes);
+app.use("/api/pendaftaran", auth, pendaftaranRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Backend magang (MySQL) berjalan" });

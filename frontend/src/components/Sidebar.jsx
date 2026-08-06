@@ -37,6 +37,8 @@ function Sidebar({
         navigate('/dashboard');
       } else if (key === 'pelayanan') {
         navigate('/pendaftaran');
+      } else if (key === 'medis') {
+        navigate('/medis');
       }
     }
   };
