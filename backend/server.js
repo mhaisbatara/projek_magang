@@ -15,6 +15,9 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/barang", barangRoutes);
 
+import pasienRoutes from './routes/pasienRoutes.js';
+app.use('/api/pasien', pasienRoutes);
+
 app.get("/", (req, res) => {
   res.json({ message: "Backend magang (MySQL) berjalan" });
 });
