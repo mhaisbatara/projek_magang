@@ -9,6 +9,7 @@ import {
   Settings,
   CircleHelp,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './Sidebar.css';
 
 const menuItems = [
@@ -26,6 +27,20 @@ function Sidebar({
   onNavigate,
   user = { name: 'Dr. Budi Santoso', role: 'Administrator' },
 }) {
+  const navigate = useNavigate();
+
+  const handleNavigate = (key) => {
+    if (onNavigate) {
+      onNavigate(key);
+    } else {
+      if (key === 'dashboard') {
+        navigate('/dashboard');
+      } else if (key === 'pelayanan') {
+        navigate('/pendaftaran');
+      }
+    }
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -42,7 +57,7 @@ function Sidebar({
             key={key}
             type="button"
             className={`sidebar-item ${activeKey === key ? 'is-active' : ''}`}
-            onClick={() => onNavigate?.(key)}
+            onClick={() => handleNavigate(key)}
           >
             <Icon size={18} strokeWidth={2} />
             <span>{label}</span>

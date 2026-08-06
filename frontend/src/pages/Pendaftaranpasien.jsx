@@ -1,31 +1,9 @@
 import { useState, useMemo } from "react";
-import {
-  Search,
-  Bell,
-  HelpCircle,
-  LayoutDashboard,
-  Users,
-  Microscope,
-  Wallet,
-  Archive,
-  BarChart3,
-  Settings,
-  Printer,
-  Plus,
-  AlertCircle,
-} from "lucide-react";
+import { Printer, AlertCircle } from "lucide-react";
+import Topbar from "../components/Topbar";
 
 const API_BASE = "http://localhost:5000/api";
 
-const NAV_ITEMS = [
-  { label: "Dashboard", icon: LayoutDashboard },
-  { label: "Pelayanan & Antrean", icon: Users, active: true },
-  { label: "Pelayanan Medis", icon: Plus },
-  { label: "Penunjang Medis", icon: Microscope },
-  { label: "Kasir & Keuangan", icon: Wallet },
-  { label: "Logistik & Operasional", icon: Archive },
-  { label: "Sistem & Pelaporan", icon: BarChart3 },
-];
 
 const POLI_OPTIONS = [
   "Pilih Poliklinik",
@@ -137,75 +115,11 @@ export default function PendaftaranPasien() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-[--surface-0] text-[--text-primary]">
-      {/* Sidebar */}
-      <aside className="hidden md:flex w-64 shrink-0 flex-col justify-between border-r border-[--border] bg-[--surface-2] py-5">
-        <div>
-          <div className="flex items-center gap-2 px-5 pb-5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[--border] text-blue-600">
-              <Plus size={18} />
-            </div>
-            <div>
-              <div className="text-lg font-medium leading-tight text-blue-600">SAKK Clinical</div>
-              <div className="text-xs text-[--text-muted] leading-tight">Management System</div>
-            </div>
-          </div>
+    <div className="flex flex-col h-full bg-[--surface-0] text-[--text-primary] overflow-hidden">
+      <Topbar />
 
-          <nav className="flex flex-col gap-1 px-3">
-            {NAV_ITEMS.map(({ label, icon: Icon, active }) => (
-              <button
-                key={label}
-                className={
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-left transition-colors " +
-                  (active
-                    ? "bg-teal-100 text-teal-900 font-medium"
-                    : "text-[--text-secondary] hover:bg-[--surface-1]")
-                }
-              >
-                <Icon size={18} />
-                {label}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        <div className="flex flex-col gap-1 px-3">
-          <button className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[--text-secondary] hover:bg-[--surface-1]">
-            <Settings size={18} />
-            Pengaturan
-          </button>
-          <button className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[--text-secondary] hover:bg-[--surface-1]">
-            <HelpCircle size={18} />
-            Bantuan
-          </button>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col">
-        {/* Topbar */}
-        <header className="flex items-center gap-4 border-b border-[--border] bg-[--surface-2] px-6 py-3">
-          <div className="md:hidden text-lg font-medium text-blue-600">SAKK</div>
-          <div className="flex-1 max-w-xl">
-            <div className="flex items-center gap-2 rounded-full border border-[--border] bg-[--surface-1] px-4 py-2">
-              <Search size={16} className="text-[--text-muted]" />
-              <input
-                placeholder="Pencarian Global SAKK..."
-                className="w-full bg-transparent text-sm placeholder:text-[--text-muted] focus:outline-none"
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-4 ml-auto">
-            <Bell size={20} className="text-[--text-secondary]" />
-            <HelpCircle size={20} className="text-[--text-secondary]" />
-            <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-sm font-medium text-blue-800">
-              A
-            </div>
-          </div>
-        </header>
-
-        {/* Content */}
-        <main className="flex-1 px-6 py-6 max-w-7xl">
+      {/* Content */}
+      <main className="flex-1 px-6 py-6 max-w-7xl overflow-y-auto">
           <h1 className="text-2xl font-medium">Pendaftaran Pasien</h1>
           <p className="mt-1 text-sm text-[--text-secondary]">
             Registrasi antrean untuk pelayanan poliklinik.
@@ -408,7 +322,6 @@ export default function PendaftaranPasien() {
             </div>
           </div>
         </main>
-      </div>
     </div>
   );
 }

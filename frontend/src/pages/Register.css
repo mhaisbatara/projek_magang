@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Poppins',sans-serif;
+.register-container * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
 }
 
 .register-container{
@@ -137,30 +137,19 @@ margin:20px 0;
 
 }
 
-button{
-
-width:100%;
-
-padding:17px;
-
-border:none;
-
-border-radius:14px;
-
-background:#16a34a;
-
-color:white;
-
-font-size:17px;
-
-cursor:pointer;
-
+.register-container button {
+  width: 100%;
+  padding: 17px;
+  border: none;
+  border-radius: 14px;
+  background: #16a34a;
+  color: white;
+  font-size: 17px;
+  cursor: pointer;
 }
 
-button:hover{
-
-background:#15803d;
-
+.register-container button:hover {
+  background: #15803d;
 }
 
 .error{

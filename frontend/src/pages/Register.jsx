@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import hero from "../assets/hero.png";
-import "../css/Register.css";
+import "./Register.css";
 
 export default function Register() {
 
