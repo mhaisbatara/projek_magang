@@ -5,136 +5,135 @@ import hero from "../assets/hero.png";
 import "./Login.css";
 
 export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-    const { login } = useAuth();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    const navigate = useNavigate();
+  const submit = async (e) => {
+    e.preventDefault();
 
-    const [username,setUsername]=useState("");
-    const [password,setPassword]=useState("");
-    const [show,setShow]=useState(false);
-    const [loading,setLoading]=useState(false);
-    const [error,setError]=useState("");
+    setLoading(true);
+    setError("");
 
-    const submit=async(e)=>{
-
-        e.preventDefault();
-
-        setLoading(true);
-        setError("");
-
-        try{
-
-            await login(username,password);
-
-            navigate("/dashboard");
-
-        }
-
-        catch(err){
-
-            setError(
-                err.response?.data?.message ||
-                "Login gagal"
-            );
-
-        }
-
-        setLoading(false);
-
+    try {
+      await login(username, password);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "Login gagal");
     }
 
-    return(
+    setLoading(false);
+  };
 
-<div className="login-container">
+  return (
+    <div className="login-container">
 
-<div className="login-box">
+      <div className="login-left">
 
-<div className="login-left">
+    <img
+        src={hero}
+        alt="Hero"
+        className="hero-image"
+    />
 
-<h1>Sistem Klinik</h1>
+    <div className="overlay"></div>
 
-<p>
-Silakan login untuk masuk ke sistem
-</p>
+    <div className="hero-content">
 
-{
-error &&
-<div className="error">
-{error}
-</div>
-}
+        <div className="logo">
+            🏥 SAKK Clinical
+        </div>
 
-<form onSubmit={submit}>
+        <div className="hero-text">
 
-<input
-type="text"
-placeholder="Username"
-value={username}
-onChange={(e)=>setUsername(e.target.value)}
-required
-/>
+            <h1>SAKK Clinical</h1>
 
-<input
-type={show?"text":"password"}
-placeholder="Password"
-value={password}
-onChange={(e)=>setPassword(e.target.value)}
-required
-/>
+            <p>
+                Sistem manajemen klinik modern yang
+                mengutamakan ketepatan, kepercayaan,
+                dan kenyamanan operasional.
+            </p>
 
-<label className="remember">
+        </div>
 
-<input
-type="checkbox"
-onChange={()=>setShow(!show)}
-/>
-
-Lihat Password
-
-</label>
-
-<button>
-
-{
-loading
-?
-"Loading..."
-:
-"LOGIN"
-}
-
-</button>
-
-</form>
-
-<div className="register">
-
-Belum punya akun?
-
-<Link to="/register">
-
-Daftar
-
-</Link>
+    </div>
 
 </div>
 
-</div>
+      <div className="login-right">
 
-<div className="login-right">
+        <div className="login-card">
 
-<img
-src={hero}
-alt=""
-/>
+          <h1>Selamat Datang</h1>
 
-</div>
+          <p>Silakan login untuk masuk ke sistem.</p>
 
-</div>
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
 
-</div>
+          <form className="login-form" onSubmit={submit}>
 
-    )
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
 
+            <input
+              type={show ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+
+            <label className="password-option">
+
+              <input
+                type="checkbox"
+                checked={show}
+                onChange={() => setShow(!show)}
+              />
+
+              Lihat Password
+
+            </label>
+
+            <button
+              className="login-btn"
+              disabled={loading}
+            >
+              {loading ? "Loading..." : "LOGIN"}
+            </button>
+
+          </form>
+
+          <div className="register-link">
+
+            Belum punya akun?
+
+            {" "}
+
+            <Link to="/register">
+              Daftar
+            </Link>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
 }

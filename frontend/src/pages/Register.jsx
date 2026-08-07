@@ -5,7 +5,6 @@ import hero from "../assets/hero.png";
 import "./Register.css";
 
 export default function Register() {
-
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -33,7 +32,6 @@ export default function Register() {
     setError("");
 
     try {
-
       await register(
         form.nama,
         form.username,
@@ -41,112 +39,129 @@ export default function Register() {
       );
 
       alert("Register berhasil");
-
       navigate("/login");
-
     } catch (err) {
-
       setError(
         err.response?.data?.message ||
         "Register gagal"
       );
-
     }
 
     setLoading(false);
   };
 
   return (
+    <div className="login-container">
 
-<div className="register-container">
+      {/* FORM DI KIRI */}
+      <div className="login-right">
 
-<div className="register-box">
+        <div className="login-card">
 
-<div className="register-right">
+          <h1>Daftar Akun</h1>
 
-<img src={hero} alt="" />
+          <p>
+            Silakan isi data berikut untuk membuat akun.
+          </p>
 
-</div>
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
 
-<div className="register-left">
+          <form
+            className="login-form"
+            onSubmit={submit}
+          >
 
-<h1>Sistem Klinik</h1>
+            <input
+              type="text"
+              name="nama"
+              placeholder="Nama Lengkap"
+              value={form.nama}
+              onChange={handleChange}
+              required
+            />
 
-<p>Buat akun baru</p>
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              value={form.username}
+              onChange={handleChange}
+              required
+            />
 
-{error &&
+            <input
+              type={show ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
 
-<div className="error">
+            <label className="password-option">
+              <input
+                type="checkbox"
+                checked={show}
+                onChange={() => setShow(!show)}
+              />
+              Lihat Password
+            </label>
 
-{error}
+            <button
+              className="login-btn"
+              disabled={loading}
+            >
+              {loading ? "Loading..." : "DAFTAR"}
+            </button>
 
-</div>
+          </form>
 
-}
+          <div className="register-link">
+            Sudah punya akun?{" "}
+            <Link to="/login">
+              Login
+            </Link>
+          </div>
 
-<form onSubmit={submit}>
+        </div>
 
-<input
-name="nama"
-placeholder="Nama Lengkap"
-value={form.nama}
-onChange={handleChange}
-required
-/>
+      </div>
 
-<input
-name="username"
-placeholder="Username"
-value={form.username}
-onChange={handleChange}
-required
-/>
+      {/* HERO DI KANAN */}
+      <div className="login-left">
 
-<input
-type={show ? "text" : "password"}
-name="password"
-placeholder="Password"
-value={form.password}
-onChange={handleChange}
-required
-/>
+        <img
+          src={hero}
+          alt="Hero"
+          className="hero-image"
+        />
 
-<label className="remember">
+        <div className="overlay"></div>
 
-<input
-type="checkbox"
-onChange={() => setShow(!show)}
-/>
+        <div className="hero-content">
 
-Lihat Password
+          <div className="logo">
+            🏥 SAKK Clinical
+          </div>
 
-</label>
+          <div className="hero-text">
+            <h1>Daftar Akun Baru</h1>
 
-<button>
+            <p>
+              Bergabunglah bersama sistem klinik untuk
+              mengelola data pasien, pelayanan,
+              dan administrasi dengan lebih mudah.
+            </p>
+          </div>
 
-{loading ? "Loading..." : "DAFTAR"}
+        </div>
 
-</button>
+      </div>
 
-</form>
-
-<div className="register-link">
-
-Sudah punya akun?
-
-<Link to="/login">
-
-Login
-
-</Link>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
+    </div>
   );
 }
