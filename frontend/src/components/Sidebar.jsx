@@ -39,9 +39,19 @@ function Sidebar({
         navigate('/pendaftaran');
       } else if (key === 'medis') {
         navigate('/medis');
+
+      }else if (key === 'sistem') {
+        navigate('/administration');
+      } else if (key === 'kasir') {
+        navigate('/kasir');
+      } else if (key === 'penunjang') {
+        navigate('/penunjang');
+
       } else if (key === 'logistik') {
         navigate('/logistik');
+
       }
+      
     }
   };
 

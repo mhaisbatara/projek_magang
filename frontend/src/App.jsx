@@ -7,7 +7,13 @@ import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Pendaftaranpasien from "./pages/Pendaftaranpasien";
 import PelayananMedis from "./pages/PelayananMedis";
+
+import Administration from "./pages/Administration";
+import Kasir from "./pages/Kasir";
+import PenunjangMedis from "./pages/PenunjangMedis";
+
 import Logistik from "./pages/Logistik";
+
 import "./App.css";
 
 function App() {
@@ -58,6 +64,41 @@ function App() {
             }
           />
           <Route
+
+            path="/administration"
+            element={
+              <ProtectedRoute>
+                <div className="app-shell">
+                  <Sidebar activeKey="sistem" />
+                  <main className="app-content">
+                    <Administration />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/kasir"
+            element={
+              <ProtectedRoute>
+                <div className="app-shell">
+                  <Sidebar activeKey="kasir" />
+                  <main className="app-content">
+                    <Kasir />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/penunjang"
+            element={
+              <ProtectedRoute>
+                <div className="app-shell">
+                  <Sidebar activeKey="penunjang" />
+                  <main className="app-content">
+                    <PenunjangMedis />
+
             path="/logistik"
             element={
               <ProtectedRoute>
@@ -65,6 +106,7 @@ function App() {
                   <Sidebar activeKey="logistik" />
                   <main className="app-content">
                     <Logistik />
+
                   </main>
                 </div>
               </ProtectedRoute>
