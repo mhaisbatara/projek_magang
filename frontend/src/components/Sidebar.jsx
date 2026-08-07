@@ -39,6 +39,8 @@ function Sidebar({
         navigate('/pendaftaran');
       } else if (key === 'medis') {
         navigate('/medis');
+      } else if (key === 'logistik') {
+        navigate('/logistik');
       }
     }
   };
