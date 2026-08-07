@@ -6,6 +6,12 @@
 
   --text-primary: #1f2430;
   --text-secondary: #868c9c;
+  --text-muted: #b0b4c0;
+
+  --surface-0: #f5f3fc;
+  --surface-1: #ecebf5;
+  --surface-2: #ffffff;
+  --border: #ecebf5;
 
   --sidebar-active-bg: #d9f7e6;
   --sidebar-active-text: #16794f;
