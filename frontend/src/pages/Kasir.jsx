@@ -1,12 +1,10 @@
 import {
-  Wallet,
   Receipt,
   CreditCard,
   BookOpen,
   TrendingUp,
   FileCheck2,
   Banknote,
-  History,
 } from "lucide-react";
 import "./Kasir.css";
 

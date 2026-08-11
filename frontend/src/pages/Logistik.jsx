@@ -43,8 +43,8 @@ function statusBadge(status) {
     aman: "badge-green",
     menipis: "badge-orange",
     habis: "badge-red",
-    diajukan: "badge-blue",
-    diproses: "badge-orange",
+    draft: "badge-blue",
+    dikirim: "badge-orange",
     diterima: "badge-green",
     batal: "badge-red",
     lunas: "badge-green",
@@ -591,8 +591,8 @@ function TabPO() {
         <div className="logistik-filter">
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
             <option value="">Semua Status</option>
-            <option value="diajukan">Diajukan</option>
-            <option value="diproses">Diproses</option>
+            <option value="draft">Draft</option>
+            <option value="dikirim">Dikirim</option>
             <option value="diterima">Diterima</option>
             <option value="batal">Batal</option>
           </select>
@@ -632,17 +632,17 @@ function TabPO() {
                     <button type="button" className="btn-icon" title="Detail" onClick={() => handleDetail(po.id_po)}>
                       <Search size={15} />
                     </button>
-                    {po.status === "diajukan" && (
-                      <button type="button" className="btn-icon" title="Proses" onClick={() => handleStatusChange(po.id_po, "diproses")}>
+                    {po.status === "draft" && (
+                      <button type="button" className="btn-icon" title="Proses" onClick={() => handleStatusChange(po.id_po, "dikirim")}>
                         <Check size={15} />
                       </button>
                     )}
-                    {po.status === "diproses" && (
+                    {po.status === "dikirim" && (
                       <button type="button" className="btn-icon btn-icon-success" title="Terima Barang" onClick={() => handleTerima(po.id_po)}>
                         <Warehouse size={15} />
                       </button>
                     )}
-                    {(po.status === "diajukan" || po.status === "diproses") && (
+                    {(po.status === "draft" || po.status === "dikirim") && (
                       <button type="button" className="btn-icon btn-icon-danger" title="Batalkan" onClick={() => handleStatusChange(po.id_po, "batal")}>
                         <X size={15} />
                       </button>
@@ -656,8 +656,10 @@ function TabPO() {
       )}
 
       {showForm && (
-        <POForm           onClose={() => setShowForm(false)}
-          onSaved={() => { setShowForm(false); reload(); }} />
+        <POForm
+          onClose={() => setShowForm(false)}
+          onSaved={() => { setShowForm(false); reload(); }}
+        />
       )}
 
       {detail && (

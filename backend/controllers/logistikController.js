@@ -6,22 +6,43 @@ async function generateId(conn, table, column, prefix) {
   const [rows] = await conn.query(
     `SELECT ${column} FROM ${table} ORDER BY ${column} DESC LIMIT 1 FOR UPDATE`
   );
-  if (rows.length === 0) return prefix + "0001";
+  if (rows.length === 0) return prefix + "01";
   const lastNumber = parseInt(rows[0][column].replace(prefix, ""), 10);
-  return prefix + String(lastNumber + 1).padStart(4, "0");
+  return prefix + String(lastNumber + 1).padStart(2, "0");
 }
 
-async function catatAudit(conn, idUser, aktivitas, modul) {
-  const idLog = await generateId(conn, "audit_log", "id_log", "LOG");
+// Helper to generate kode_po (e.g., PO-20260811-001), global daily sequence
+async function generateKodePo(conn) {
+  const [[ymdRow]] = await conn.query("SELECT DATE_FORMAT(CURDATE(), '%Y%m%d') AS ymd");
+  const [rows] = await conn.query(
+    "SELECT COUNT(*) AS total FROM mst_purchase_order WHERE tanggal_po = CURDATE() FOR UPDATE"
+  );
+  const seq = (rows[0]?.total || 0) + 1;
+  return `PO-${ymdRow.ymd}-${String(seq).padStart(3, "0")}`;
+}
+
+// Helper to generate kode_obat (e.g., OBT011), sequential per max value
+async function generateKodeObat(conn) {
+  const [rows] = await conn.query(
+    "SELECT kode_obat FROM mst_obat ORDER BY kode_obat DESC LIMIT 1 FOR UPDATE"
+  );
+  if (rows.length === 0) return "OBT001";
+  const lastNumber = parseInt(rows[0].kode_obat.replace("OBT", ""), 10);
+  return "OBT" + String(lastNumber + 1).padStart(3, "0");
+}
+
+async function catatAudit(conn, emailUser, aksi, tabelTerkait) {
+  const idLog = await generateId(conn, "audit_log", "id", "LOG");
   await conn.query(
-    "INSERT INTO audit_log (id_log, id_user, aktivitas, modul, waktu) VALUES (?, ?, ?, ?, NOW())",
-    [idLog, idUser || "USR0001", aktivitas, modul]
+    "INSERT INTO audit_log (id, email_user, aksi, tabel_terkait, waktu) VALUES (?, ?, ?, ?, NOW())",
+    [idLog, emailUser || null, (aksi || "").slice(0, 50), tabelTerkait]
   );
 }
 
-function statusStok(stok) {
+function statusStok(stok, minimum) {
+  const batas = minimum || BATAS_STOK_MENIPIS;
   if (stok <= 0) return "habis";
-  if (stok <= BATAS_STOK_MENIPIS) return "menipis";
+  if (stok <= batas) return "menipis";
   return "aman";
 }
 
@@ -31,30 +52,30 @@ function statusStok(stok) {
 export const getLogistikSummary = async (req, res) => {
   try {
     const [totalObat] = await pool.query(
-      "SELECT COUNT(*) AS total FROM obat"
+      "SELECT COUNT(*) AS total FROM mst_obat"
     );
 
     const [stokMenipis] = await pool.query(
-      "SELECT COUNT(*) AS total FROM obat WHERE stok <= ?",
+      "SELECT COUNT(*) AS total FROM mst_obat WHERE stok <= COALESCE(stok_minimum, ?)",
       [BATAS_STOK_MENIPIS]
     );
 
     const [totalStok] = await pool.query(
-      "SELECT COALESCE(SUM(stok), 0) AS total FROM obat"
+      "SELECT COALESCE(SUM(stok), 0) AS total FROM mst_obat"
     );
 
     const [poDiajukan] = await pool.query(
-      "SELECT COUNT(*) AS total FROM purchase_order WHERE status = 'diajukan'"
+      "SELECT COUNT(*) AS total FROM mst_purchase_order WHERE status = 'draft'"
     );
 
     const [poDiproses] = await pool.query(
-      "SELECT COUNT(*) AS total FROM purchase_order WHERE status = 'diproses'"
+      "SELECT COUNT(*) AS total FROM mst_purchase_order WHERE status = 'dikirim'"
     );
 
     const [nilaiPembelian] = await pool.query(
-      `SELECT COALESCE(SUM(pd.jumlah * pd.harga_satuan), 0) AS total
-       FROM purchase_order po
-       JOIN po_detail pd ON po.id_po = pd.id_po
+      `SELECT COALESCE(SUM(pd.qty * pd.harga_satuan), 0) AS total
+       FROM mst_purchase_order po
+       JOIN mst_po_detail pd ON po.kode_po = pd.kode_po
        WHERE po.status = 'diterima'
          AND MONTH(po.tanggal_po) = MONTH(CURDATE())
          AND YEAR(po.tanggal_po) = YEAR(CURDATE())`
@@ -62,26 +83,26 @@ export const getLogistikSummary = async (req, res) => {
 
     const [nilaiKasKeluar] = await pool.query(
       `SELECT COALESCE(SUM(jumlah), 0) AS total
-       FROM buku_kas
-       WHERE jenis_transaksi = 'keluar'
+       FROM trx_buku_kas
+       WHERE jenis = 'keluar'
          AND MONTH(tanggal) = MONTH(CURDATE())
          AND YEAR(tanggal) = YEAR(CURDATE())`
     );
 
     const [obatMenipis] = await pool.query(
-      `SELECT id_obat, nama_obat, satuan, stok
-       FROM obat WHERE stok <= ? ORDER BY stok ASC`,
+      `SELECT id AS id_obat, nama_obat, satuan, stok
+       FROM mst_obat WHERE stok <= COALESCE(stok_minimum, ?) ORDER BY stok ASC`,
       [BATAS_STOK_MENIPIS]
     );
 
     const [poTerbaru] = await pool.query(
-      `SELECT po.id_po, po.tanggal_po, po.status,
+      `SELECT po.id AS id_po, po.tanggal_po, po.status,
               s.nama_supplier,
-              COALESCE(SUM(pd.jumlah * pd.harga_satuan), 0) AS total
-       FROM purchase_order po
-       LEFT JOIN supplier s ON po.id_supplier = s.id_supplier
-       LEFT JOIN po_detail pd ON po.id_po = pd.id_po
-       GROUP BY po.id_po
+              COALESCE(SUM(pd.qty * pd.harga_satuan), 0) AS total
+       FROM mst_purchase_order po
+       LEFT JOIN mst_supplier s ON po.kode_supplier = s.kode_supplier
+       LEFT JOIN mst_po_detail pd ON po.kode_po = pd.kode_po
+       GROUP BY po.id
        ORDER BY po.tanggal_po DESC
        LIMIT 5`
     );
@@ -111,17 +132,15 @@ export const getLogistikSummary = async (req, res) => {
 export const getAllObat = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT o.id_obat, o.nama_obat, o.satuan, o.harga, o.stok,
-              i.id_inventori, i.jumlah_stok, i.tanggal_update, i.jenis_alkes
-       FROM obat o
-       LEFT JOIN inventori i ON o.id_obat = i.id_obat
-       ORDER BY o.nama_obat ASC`
+      `SELECT id AS id_obat, nama_obat, kategori, satuan, harga_jual AS harga, stok, stok_minimum
+       FROM mst_obat
+       ORDER BY nama_obat ASC`
     );
 
     const result = rows.map((r) => ({
       ...r,
       harga: Number(r.harga),
-      status_stok: statusStok(r.stok),
+      status_stok: statusStok(r.stok, r.stok_minimum),
     }));
 
     res.json(result);
@@ -142,26 +161,21 @@ export const createObat = async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    const id_obat = await generateId(conn, "obat", "id_obat", "OBT");
-    const id_inventori = await generateId(conn, "inventori", "id_inventori", "INV");
+    const id_obat = await generateId(conn, "mst_obat", "id", "OBT");
+    const kode_obat = await generateKodeObat(conn);
 
     await conn.query(
-      "INSERT INTO obat (id_obat, nama_obat, satuan, harga, stok) VALUES (?, ?, ?, ?, ?)",
-      [id_obat, nama_obat, satuan || null, harga, stok || 0]
+      "INSERT INTO mst_obat (id, kode_obat, nama_obat, kategori, satuan, stok, harga_beli, harga_jual, stok_minimum) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id_obat, kode_obat, nama_obat, jenis_alkes || null, satuan || null, stok || 0, 0, harga, BATAS_STOK_MENIPIS]
     );
 
-    await conn.query(
-      "INSERT INTO inventori (id_inventori, id_obat, jumlah_stok, tanggal_update, jenis_alkes) VALUES (?, ?, ?, CURDATE(), ?)",
-      [id_inventori, id_obat, stok || 0, jenis_alkes || null]
-    );
-
-    await catatAudit(conn, req.user?.id, `Menambahkan obat baru: ${nama_obat}`, "Logistik");
+    await catatAudit(conn, req.user?.nama, `Menambahkan obat baru: ${nama_obat}`, "obat");
 
     await conn.commit();
 
     res.status(201).json({
       message: "Obat berhasil ditambahkan",
-      data: { id_obat, id_inventori, nama_obat, satuan, harga, stok: stok || 0 },
+      data: { id_obat, nama_obat, satuan, harga, stok: stok || 0 },
     });
   } catch (err) {
     await conn.rollback();
@@ -181,7 +195,7 @@ export const updateObat = async (req, res) => {
     await conn.beginTransaction();
 
     const [existing] = await conn.query(
-      "SELECT * FROM obat WHERE id_obat = ? FOR UPDATE",
+      "SELECT * FROM mst_obat WHERE id = ? FOR UPDATE",
       [id_obat]
     );
 
@@ -191,27 +205,17 @@ export const updateObat = async (req, res) => {
     }
 
     await conn.query(
-      `UPDATE obat SET
+      `UPDATE mst_obat SET
         nama_obat = COALESCE(?, nama_obat),
+        kategori = COALESCE(?, kategori),
         satuan = COALESCE(?, satuan),
-        harga = COALESCE(?, harga),
+        harga_jual = COALESCE(?, harga_jual),
         stok = COALESCE(?, stok)
-       WHERE id_obat = ?`,
-      [nama_obat, satuan, harga, stok, id_obat]
+       WHERE id = ?`,
+      [nama_obat, jenis_alkes, satuan, harga, stok, id_obat]
     );
 
-    if (stok !== undefined || jenis_alkes !== undefined) {
-      await conn.query(
-        `UPDATE inventori SET
-          jumlah_stok = COALESCE(?, jumlah_stok),
-          jenis_alkes = COALESCE(?, jenis_alkes),
-          tanggal_update = CURDATE()
-         WHERE id_obat = ?`,
-        [stok, jenis_alkes, id_obat]
-      );
-    }
-
-    await catatAudit(conn, req.user?.id, `Mengubah data obat: ${existing[0].nama_obat}`, "Logistik");
+    await catatAudit(conn, req.user?.nama, `Mengubah data obat: ${existing[0].nama_obat}`, "obat");
 
     await conn.commit();
 
@@ -233,7 +237,7 @@ export const deleteObat = async (req, res) => {
     await conn.beginTransaction();
 
     const [existing] = await conn.query(
-      "SELECT nama_obat FROM obat WHERE id_obat = ? FOR UPDATE",
+      "SELECT nama_obat FROM mst_obat WHERE id = ? FOR UPDATE",
       [id_obat]
     );
 
@@ -242,10 +246,9 @@ export const deleteObat = async (req, res) => {
       return res.status(404).json({ message: "Obat tidak ditemukan" });
     }
 
-    await conn.query("DELETE FROM inventori WHERE id_obat = ?", [id_obat]);
-    await conn.query("DELETE FROM obat WHERE id_obat = ?", [id_obat]);
+    await conn.query("DELETE FROM mst_obat WHERE id = ?", [id_obat]);
 
-    await catatAudit(conn, req.user?.id, `Menghapus obat: ${existing[0].nama_obat}`, "Logistik");
+    await catatAudit(conn, req.user?.nama, `Menghapus obat: ${existing[0].nama_obat}`, "obat");
 
     await conn.commit();
 
@@ -270,9 +273,9 @@ export const cariObat = async (req, res) => {
 
     const like = `%${term}%`;
     const [rows] = await pool.query(
-      `SELECT id_obat, nama_obat, satuan, harga, stok
-       FROM obat
-       WHERE nama_obat LIKE ? OR id_obat LIKE ?
+      `SELECT id AS id_obat, nama_obat, satuan, harga_jual AS harga, stok
+       FROM mst_obat
+       WHERE nama_obat LIKE ? OR id LIKE ?
        ORDER BY nama_obat ASC
        LIMIT 20`,
       [like, like]
@@ -291,9 +294,9 @@ export const cariObat = async (req, res) => {
 export const getAllSupplier = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT s.id_supplier, s.nama_supplier, s.kontak,
-              (SELECT COUNT(*) FROM purchase_order po WHERE po.id_supplier = s.id_supplier) AS jumlah_po
-       FROM supplier s
+      `SELECT s.id AS id_supplier, s.nama_supplier, s.kontak,
+              (SELECT COUNT(*) FROM mst_purchase_order po WHERE po.kode_supplier = s.kode_supplier) AS jumlah_po
+       FROM mst_supplier s
        ORDER BY s.nama_supplier ASC`
     );
     res.json(rows);
@@ -314,14 +317,14 @@ export const createSupplier = async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    const id_supplier = await generateId(conn, "supplier", "id_supplier", "SUP");
+    const id_supplier = await generateId(conn, "mst_supplier", "id", "SUP");
 
     await conn.query(
-      "INSERT INTO supplier (id_supplier, nama_supplier, kontak) VALUES (?, ?, ?)",
-      [id_supplier, nama_supplier, kontak || null]
+      "INSERT INTO mst_supplier (id, kode_supplier, nama_supplier, kontak) VALUES (?, ?, ?, ?)",
+      [id_supplier, id_supplier, nama_supplier, kontak || null]
     );
 
-    await catatAudit(conn, req.user?.id, `Menambahkan supplier: ${nama_supplier}`, "Logistik");
+    await catatAudit(conn, req.user?.nama, `Menambahkan supplier: ${nama_supplier}`, "supplier");
 
     await conn.commit();
 
@@ -347,7 +350,7 @@ export const updateSupplier = async (req, res) => {
     await conn.beginTransaction();
 
     const [existing] = await conn.query(
-      "SELECT * FROM supplier WHERE id_supplier = ? FOR UPDATE",
+      "SELECT * FROM mst_supplier WHERE id = ? FOR UPDATE",
       [id_supplier]
     );
 
@@ -357,14 +360,14 @@ export const updateSupplier = async (req, res) => {
     }
 
     await conn.query(
-      `UPDATE supplier SET
+      `UPDATE mst_supplier SET
         nama_supplier = COALESCE(?, nama_supplier),
         kontak = COALESCE(?, kontak)
-       WHERE id_supplier = ?`,
+       WHERE id = ?`,
       [nama_supplier, kontak, id_supplier]
     );
 
-    await catatAudit(conn, req.user?.id, `Mengubah data supplier: ${existing[0].nama_supplier}`, "Logistik");
+    await catatAudit(conn, req.user?.nama, `Mengubah data supplier: ${existing[0].nama_supplier}`, "supplier");
 
     await conn.commit();
 
@@ -386,7 +389,7 @@ export const deleteSupplier = async (req, res) => {
     await conn.beginTransaction();
 
     const [existing] = await conn.query(
-      "SELECT nama_supplier FROM supplier WHERE id_supplier = ? FOR UPDATE",
+      "SELECT nama_supplier FROM mst_supplier WHERE id = ? FOR UPDATE",
       [id_supplier]
     );
 
@@ -396,7 +399,7 @@ export const deleteSupplier = async (req, res) => {
     }
 
     const [poCheck] = await conn.query(
-      "SELECT COUNT(*) AS total FROM purchase_order WHERE id_supplier = ?",
+      "SELECT COUNT(*) AS total FROM mst_purchase_order WHERE kode_supplier = ?",
       [id_supplier]
     );
 
@@ -407,9 +410,9 @@ export const deleteSupplier = async (req, res) => {
       });
     }
 
-    await conn.query("DELETE FROM supplier WHERE id_supplier = ?", [id_supplier]);
+    await conn.query("DELETE FROM mst_supplier WHERE id = ?", [id_supplier]);
 
-    await catatAudit(conn, req.user?.id, `Menghapus supplier: ${existing[0].nama_supplier}`, "Logistik");
+    await catatAudit(conn, req.user?.nama, `Menghapus supplier: ${existing[0].nama_supplier}`, "supplier");
 
     await conn.commit();
 
@@ -431,13 +434,13 @@ export const getAllPO = async (req, res) => {
     const { status } = req.query;
 
     let query = `
-      SELECT po.id_po, po.tanggal_po, po.status,
-             s.id_supplier, s.nama_supplier,
-             COUNT(pd.id_po_detail) AS jumlah_item,
-             COALESCE(SUM(pd.jumlah * pd.harga_satuan), 0) AS total_nilai
-      FROM purchase_order po
-      LEFT JOIN supplier s ON po.id_supplier = s.id_supplier
-      LEFT JOIN po_detail pd ON po.id_po = pd.id_po
+      SELECT po.id AS id_po, po.tanggal_po, po.status,
+             s.id AS id_supplier, s.nama_supplier,
+             COUNT(pd.id) AS jumlah_item,
+             COALESCE(SUM(pd.qty * pd.harga_satuan), 0) AS total_nilai
+      FROM mst_purchase_order po
+      LEFT JOIN mst_supplier s ON po.kode_supplier = s.kode_supplier
+      LEFT JOIN mst_po_detail pd ON po.kode_po = pd.kode_po
     `;
 
     const params = [];
@@ -446,7 +449,7 @@ export const getAllPO = async (req, res) => {
       params.push(status);
     }
 
-    query += " GROUP BY po.id_po ORDER BY po.tanggal_po DESC, po.id_po DESC";
+    query += " GROUP BY po.id ORDER BY po.tanggal_po DESC, po.id DESC";
 
     const [rows] = await pool.query(query, params);
 
@@ -462,11 +465,11 @@ export const getPOById = async (req, res) => {
     const { id_po } = req.params;
 
     const [poRows] = await pool.query(
-      `SELECT po.id_po, po.tanggal_po, po.status,
-              s.id_supplier, s.nama_supplier, s.kontak
-       FROM purchase_order po
-       LEFT JOIN supplier s ON po.id_supplier = s.id_supplier
-       WHERE po.id_po = ?`,
+      `SELECT po.id AS id_po, po.kode_po, po.tanggal_po, po.status,
+              s.id AS id_supplier, s.nama_supplier, s.kontak
+       FROM mst_purchase_order po
+       LEFT JOIN mst_supplier s ON po.kode_supplier = s.kode_supplier
+       WHERE po.id = ?`,
       [id_po]
     );
 
@@ -475,13 +478,13 @@ export const getPOById = async (req, res) => {
     }
 
     const [details] = await pool.query(
-      `SELECT pd.id_po_detail, pd.id_obat, pd.jumlah, pd.harga_satuan,
+      `SELECT pd.id AS id_po_detail, pd.kode_obat AS id_obat, pd.qty AS jumlah, pd.harga_satuan,
               o.nama_obat, o.satuan
-       FROM po_detail pd
-       LEFT JOIN obat o ON pd.id_obat = o.id_obat
-       WHERE pd.id_po = ?
-       ORDER BY pd.id_po_detail ASC`,
-      [id_po]
+       FROM mst_po_detail pd
+       LEFT JOIN mst_obat o ON o.kode_obat = pd.kode_obat
+       WHERE pd.kode_po = ?
+       ORDER BY pd.id ASC`,
+      [poRows[0].kode_po]
     );
 
     const total_nilai = details.reduce(
@@ -522,7 +525,7 @@ export const createPO = async (req, res) => {
     await conn.beginTransaction();
 
     const [supplier] = await conn.query(
-      "SELECT nama_supplier FROM supplier WHERE id_supplier = ? FOR UPDATE",
+      "SELECT nama_supplier FROM mst_supplier WHERE id = ? FOR UPDATE",
       [id_supplier]
     );
 
@@ -531,33 +534,44 @@ export const createPO = async (req, res) => {
       return res.status(404).json({ message: "Supplier tidak ditemukan" });
     }
 
-    const id_po = await generateId(conn, "purchase_order", "id_po", "PO");
+    const id_po = await generateId(conn, "mst_purchase_order", "id", "PO");
+    const kode_po = await generateKodePo(conn);
 
     await conn.query(
-      "INSERT INTO purchase_order (id_po, id_supplier, tanggal_po, status) VALUES (?, ?, CURDATE(), 'diajukan')",
-      [id_po, id_supplier]
+      "INSERT INTO mst_purchase_order (id, kode_po, kode_supplier, tanggal_po, status) VALUES (?, ?, ?, CURDATE(), 'draft')",
+      [id_po, kode_po, id_supplier]
     );
 
     for (const item of items) {
-      const id_po_detail = await generateId(conn, "po_detail", "id_po_detail", "POD");
+      const id_po_detail = await generateId(conn, "mst_po_detail", "id", "POD");
+
+      const [obat] = await conn.query(
+        "SELECT kode_obat FROM mst_obat WHERE id = ? FOR UPDATE",
+        [item.id_obat]
+      );
+      if (obat.length === 0) {
+        await conn.rollback();
+        return res.status(404).json({ message: `Obat dengan id ${item.id_obat} tidak ditemukan` });
+      }
+
       await conn.query(
-        "INSERT INTO po_detail (id_po_detail, id_po, id_obat, jumlah, harga_satuan) VALUES (?, ?, ?, ?, ?)",
-        [id_po_detail, id_po, item.id_obat, item.jumlah, item.harga_satuan]
+        "INSERT INTO mst_po_detail (id, kode_po, kode_obat, qty, harga_satuan) VALUES (?, ?, ?, ?, ?)",
+        [id_po_detail, kode_po, obat[0].kode_obat, item.jumlah, item.harga_satuan]
       );
     }
 
     await catatAudit(
       conn,
-      req.user?.id,
-      `Membuat purchase order ${id_po} ke ${supplier[0].nama_supplier}`,
-      "Logistik"
+      req.user?.nama,
+      `Membuat purchase order ${kode_po} ke ${supplier[0].nama_supplier}`,
+      "purchase_order"
     );
 
     await conn.commit();
 
     res.status(201).json({
       message: "Purchase order berhasil dibuat",
-      data: { id_po, id_supplier, status: "diajukan", jumlah_item: items.length },
+      data: { id_po, kode_po, id_supplier, status: "draft", jumlah_item: items.length },
     });
   } catch (err) {
     await conn.rollback();
@@ -572,10 +586,10 @@ export const updateStatusPO = async (req, res) => {
   const { id_po } = req.params;
   const { status } = req.body;
 
-  const validStatus = ["diajukan", "diproses", "batal"];
+  const validStatus = ["draft", "dikirim", "batal"];
   if (!validStatus.includes(status)) {
     return res.status(400).json({
-      message: "Status tidak valid. Gunakan: diajukan, diproses, atau batal",
+      message: "Status tidak valid. Gunakan: draft, dikirim, atau batal",
     });
   }
 
@@ -584,7 +598,7 @@ export const updateStatusPO = async (req, res) => {
     await conn.beginTransaction();
 
     const [existing] = await conn.query(
-      "SELECT * FROM purchase_order WHERE id_po = ? FOR UPDATE",
+      "SELECT * FROM mst_purchase_order WHERE id = ? FOR UPDATE",
       [id_po]
     );
 
@@ -599,15 +613,15 @@ export const updateStatusPO = async (req, res) => {
     }
 
     await conn.query(
-      "UPDATE purchase_order SET status = ? WHERE id_po = ?",
+      "UPDATE mst_purchase_order SET status = ? WHERE id = ?",
       [status, id_po]
     );
 
     await catatAudit(
       conn,
-      req.user?.id,
-      `Mengubah status PO ${id_po} menjadi ${status}`,
-      "Logistik"
+      req.user?.nama,
+      `Mengubah status PO ${existing[0].kode_po} menjadi ${status}`,
+      "purchase_order"
     );
 
     await conn.commit();
@@ -630,7 +644,7 @@ export const terimaPO = async (req, res) => {
     await conn.beginTransaction();
 
     const [poRows] = await conn.query(
-      "SELECT * FROM purchase_order WHERE id_po = ? FOR UPDATE",
+      "SELECT * FROM mst_purchase_order WHERE id = ? FOR UPDATE",
       [id_po]
     );
 
@@ -652,8 +666,8 @@ export const terimaPO = async (req, res) => {
     }
 
     const [details] = await conn.query(
-      "SELECT id_obat, jumlah, harga_satuan FROM po_detail WHERE id_po = ?",
-      [id_po]
+      "SELECT kode_obat, qty AS jumlah, harga_satuan FROM mst_po_detail WHERE kode_po = ?",
+      [po.kode_po]
     );
 
     if (details.length === 0) {
@@ -667,35 +681,28 @@ export const terimaPO = async (req, res) => {
       totalNilai += Number(item.harga_satuan) * item.jumlah;
 
       await conn.query(
-        "UPDATE obat SET stok = stok + ? WHERE id_obat = ?",
-        [item.jumlah, item.id_obat]
-      );
-
-      await conn.query(
-        `UPDATE inventori
-         SET jumlah_stok = jumlah_stok + ?, tanggal_update = CURDATE()
-         WHERE id_obat = ?`,
-        [item.jumlah, item.id_obat]
+        "UPDATE mst_obat SET stok = stok + ? WHERE kode_obat = ?",
+        [item.jumlah, item.kode_obat]
       );
     }
 
     await conn.query(
-      "UPDATE purchase_order SET status = 'diterima' WHERE id_po = ?",
+      "UPDATE mst_purchase_order SET status = 'diterima' WHERE id = ?",
       [id_po]
     );
 
-    const id_kas = await generateId(conn, "buku_kas", "id_kas", "KAS");
+    const id_kas = await generateId(conn, "trx_buku_kas", "id", "KAS");
     await conn.query(
-      `INSERT INTO buku_kas (id_kas, tanggal, jenis_transaksi, kategori, jumlah, keterangan)
-       VALUES (?, CURDATE(), 'keluar', 'Pembelian Obat', ?, ?)`,
-      [id_kas, totalNilai, `Penerimaan PO ${id_po}`]
+      `INSERT INTO trx_buku_kas (id, tanggal, jenis, kategori, keterangan, jumlah, email_user)
+       VALUES (?, CURDATE(), 'keluar', 'Pembelian Obat', ?, ?, ?)`,
+      [id_kas, `Penerimaan PO ${po.kode_po}`, totalNilai, req.user?.nama || null]
     );
 
     await catatAudit(
       conn,
-      req.user?.id,
-      `Menerima PO ${id_po}, total Rp ${totalNilai}`,
-      "Logistik"
+      req.user?.nama,
+      `Menerima PO ${po.kode_po}, total Rp ${totalNilai}`,
+      "purchase_order"
     );
 
     await conn.commit();
@@ -726,14 +733,14 @@ export const getBukuKas = async (req, res) => {
     const { jenis_transaksi, limit } = req.query;
 
     let query = `
-      SELECT id_kas, tanggal, jenis_transaksi, kategori, jumlah, keterangan
-      FROM buku_kas
+      SELECT id AS id_kas, tanggal, jenis AS jenis_transaksi, kategori, jumlah, keterangan
+      FROM trx_buku_kas
     `;
     const params = [];
     const conditions = [];
 
     if (jenis_transaksi) {
-      conditions.push("jenis_transaksi = ?");
+      conditions.push("jenis = ?");
       params.push(jenis_transaksi);
     }
 
@@ -741,7 +748,7 @@ export const getBukuKas = async (req, res) => {
       query += " WHERE " + conditions.join(" AND ");
     }
 
-    query += " ORDER BY tanggal DESC, id_kas DESC";
+    query += " ORDER BY tanggal DESC, id DESC";
 
     if (limit) {
       query += " LIMIT ?";
@@ -752,9 +759,9 @@ export const getBukuKas = async (req, res) => {
 
     const [ringkasan] = await pool.query(
       `SELECT
-        COALESCE(SUM(CASE WHEN jenis_transaksi = 'masuk' THEN jumlah ELSE 0 END), 0) AS total_masuk,
-        COALESCE(SUM(CASE WHEN jenis_transaksi = 'keluar' THEN jumlah ELSE 0 END), 0) AS total_keluar
-       FROM buku_kas`
+        COALESCE(SUM(CASE WHEN jenis = 'masuk' THEN jumlah ELSE 0 END), 0) AS total_masuk,
+        COALESCE(SUM(CASE WHEN jenis = 'keluar' THEN jumlah ELSE 0 END), 0) AS total_keluar
+       FROM trx_buku_kas`
     );
 
     res.json({

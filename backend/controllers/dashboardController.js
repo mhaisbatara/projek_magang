@@ -4,43 +4,42 @@ import pool from "../config/db.js";
 // Mengembalikan KPI ringkasan hari ini, tren kunjungan 7 hari, dan distribusi pasien per poli
 export const getDashboardSummary = async (req, res) => {
   try {
-    // 1. Kunjungan hari ini
+    // 1. Kunjungan hari ini (dihitung dari antrian hari ini)
     const [kunjunganHariIni] = await pool.query(
-      `SELECT COUNT(*) AS total FROM kunjungan WHERE tanggal_kunjungan = CURDATE()`
+      `SELECT COUNT(*) AS total FROM mst_antrian WHERE tanggal = CURDATE()`
     );
 
-    // 2. Pendapatan hari ini (dari kasir yang sudah lunas, dibayar hari ini)
+    // 2. Pendapatan hari ini (dari tagihan yang sudah lunas hari ini)
     const [pendapatanHariIni] = await pool.query(
       `SELECT COALESCE(SUM(total_tagihan), 0) AS total
-       FROM kasir
-       WHERE status_bayar = 'lunas' AND DATE(tanggal_bayar) = CURDATE()`
+       FROM trx_tagihan
+       WHERE status_pembayaran = 'lunas' AND tanggal = CURDATE()`
     );
 
     // 3. Pasien menunggu (antrian hari ini yang belum dipanggil/selesai)
     const [pasienMenunggu] = await pool.query(
       `SELECT COUNT(*) AS total
-       FROM antrian a
-       JOIN pendaftaran p ON a.id_pendaftaran = p.id_pendaftaran
-       WHERE p.tanggal = CURDATE() AND a.status_panggil = 'menunggu'`
+       FROM mst_antrian
+       WHERE tanggal = CURDATE() AND status_panggil = 'menunggu'`
     );
 
-    // 4. Okupansi poli hari ini = (jumlah pendaftaran hari ini / total kuota jadwal hari ini) x 100
+    // 4. Okupansi poli hari ini = (jumlah antrian hari ini / total kuota jadwal hari ini) x 100
     const [[kuotaRow]] = await pool.query(
-      `SELECT COALESCE(SUM(kuota), 0) AS total_kuota
-       FROM jadwal_dokter
+      `SELECT COALESCE(SUM(kuota_pasien), 0) AS total_kuota
+       FROM mst_jadwal_dokter
        WHERE hari = ELT(WEEKDAY(CURDATE()) + 1, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')`
     );
     const totalKuota = kuotaRow.total_kuota || 0;
-    const totalPendaftaranHariIni = kunjunganHariIni[0].total;
-    const okupansi = totalKuota > 0 ? Math.round((totalPendaftaranHariIni / totalKuota) * 100) : 0;
+    const totalAntrianHariIni = kunjunganHariIni[0].total;
+    const okupansi = totalKuota > 0 ? Math.round((totalAntrianHariIni / totalKuota) * 100) : 0;
 
-    // 5. Tren kunjungan 7 hari terakhir
+    // 5. Tren kunjungan 7 hari terakhir (dari antrian)
     const [trenRows] = await pool.query(
-      `SELECT tanggal_kunjungan, COUNT(*) AS total
-       FROM kunjungan
-       WHERE tanggal_kunjungan >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-       GROUP BY tanggal_kunjungan
-       ORDER BY tanggal_kunjungan ASC`
+      `SELECT tanggal AS tanggal_kunjungan, COUNT(*) AS total
+       FROM mst_antrian
+       WHERE tanggal >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+       GROUP BY tanggal
+       ORDER BY tanggal ASC`
     );
 
     const namaHari = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -60,11 +59,11 @@ export const getDashboardSummary = async (req, res) => {
 
     // 6. Distribusi pasien per poli (7 hari terakhir)
     const [poliRows] = await pool.query(
-      `SELECT poli.nama_poli AS label, COUNT(*) AS total
-       FROM pendaftaran pd
-       JOIN poli ON poli.id_poli = pd.id_poli
-       WHERE pd.tanggal >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-       GROUP BY poli.nama_poli
+      `SELECT mst_poli.nama_poli AS label, COUNT(*) AS total
+       FROM mst_antrian a
+       JOIN mst_poli ON mst_poli.kode_poli = a.kode_poli
+       WHERE a.tanggal >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+       GROUP BY mst_poli.nama_poli
        ORDER BY total DESC`
     );
 
@@ -77,7 +76,7 @@ export const getDashboardSummary = async (req, res) => {
 
     res.json({
       kpi: {
-        kunjunganHariIni: totalPendaftaranHariIni,
+        kunjunganHariIni: totalAntrianHariIni,
         pendapatanHariIni: Number(pendapatanHariIni[0].total),
         pasienMenunggu: pasienMenunggu[0].total,
         okupansiPoli: okupansi,

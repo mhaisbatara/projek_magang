@@ -10,6 +10,7 @@ import {
   Calendar, 
   IdCard, 
   Stethoscope,
+  Loader2,
   Users,
   Volume2,
   CheckCircle,
@@ -206,8 +207,8 @@ export default function PendaftaranPasien() {
   };
 
   const inputBase =
-    "w-full rounded-lg border border-[--border] bg-[--surface-2] px-3.5 py-2.5 text-sm text-[--text-primary] placeholder:text-[--text-muted] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent";
-  const labelBase = "block text-sm text-[--text-secondary] mb-1.5";
+    "w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent";
+  const labelBase = "block text-sm text-text-secondary mb-1.5";
 
   // nama pasien untuk preview (baru / lama)
   const namaPreview = tab === "lama" ? pasienTerpilih?.nama || "-" : nama || "-";
@@ -397,23 +398,23 @@ export default function PendaftaranPasien() {
   const antreanSelesai = antrianList.filter(a => a.status_panggil === "selesai");
 
   return (
-    <div className="flex flex-col h-full bg-[--surface-0] text-[--text-primary] overflow-hidden">
+    <div className="flex flex-col h-full bg-surface-0 text-text-primary overflow-hidden">
       <Topbar />
 
       <main className="flex-1 px-6 py-6 w-full overflow-y-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-medium">
+            <h1 className="text-2xl font-bold tracking-tight">
               {activeMenu === "pendaftaran" ? "Pendaftaran Pasien" : "Antrean Poliklinik"}
             </h1>
-            <p className="mt-1 text-sm text-[--text-secondary]">
+            <p className="mt-1 text-sm text-text-secondary">
               {activeMenu === "pendaftaran"
                 ? "Registrasi antrean untuk pelayanan poliklinik."
                 : "Pemanggilan dan pemeriksaan pasien poliklinik hari ini."}
             </p>
           </div>
           {activeMenu === "antrean" && (
-            <div className="flex items-center gap-2 bg-[--surface-2] border border-[--border] px-4 py-2 rounded-[--radius-sm] shadow-sm text-xs font-semibold text-[--text-secondary]">
+            <div className="flex items-center gap-2 bg-surface-2 border border-border px-4 py-2 rounded-sm shadow-sm text-xs font-semibold text-text-secondary">
               <Clock size={14} className="text-blue-500" />
               <span>
                 {new Date().toLocaleDateString("id-ID", {
@@ -428,14 +429,14 @@ export default function PendaftaranPasien() {
         </div>
 
         {/* Tab switcher at the top */}
-        <div className="mt-5 mb-6 flex gap-2 p-1 bg-[--surface-1] rounded-lg w-fit border border-[--border]">
+        <div className="mt-5 mb-6 flex gap-1.5 p-1 bg-surface-1 rounded-xl w-fit border border-border shadow-xs">
           <button
             type="button"
             onClick={() => setActiveMenu("pendaftaran")}
-            className={`flex items-center gap-2 px-5 py-2 rounded-md text-sm font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
               activeMenu === "pendaftaran"
-                ? "bg-[--surface-2] text-blue-600 shadow-sm font-bold"
-                : "text-[--text-secondary] hover:text-[--text-primary]"
+                ? "bg-surface-2 text-blue-600 shadow-sm font-bold"
+                : "text-text-secondary hover:text-text-primary hover:bg-surface-2/40"
             }`}
           >
             <UserPlus size={16} />
@@ -444,10 +445,10 @@ export default function PendaftaranPasien() {
           <button
             type="button"
             onClick={() => setActiveMenu("antrean")}
-            className={`flex items-center gap-2 px-5 py-2 rounded-md text-sm font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
               activeMenu === "antrean"
-                ? "bg-[--surface-2] text-blue-600 shadow-sm font-bold"
-                : "text-[--text-secondary] hover:text-[--text-primary]"
+                ? "bg-surface-2 text-blue-600 shadow-sm font-bold"
+                : "text-text-secondary hover:text-text-primary hover:bg-surface-2/40"
             }`}
           >
             <Users size={16} />
@@ -469,7 +470,7 @@ export default function PendaftaranPasien() {
                 <button
                   type="button"
                   onClick={() => cetakAntrean(hasil)}
-                  className="flex items-center gap-1.5 rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors shrink-0"
+                  className="flex items-center gap-1.5 rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors shrink-0 cursor-pointer"
                 >
                   <Printer size={14} /> Cetak Ulang
                 </button>
@@ -483,19 +484,19 @@ export default function PendaftaranPasien() {
               </div>
             )}
 
-            <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 items-start">
+            <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
               {/* Left column */}
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-6">
                 {/* Data pribadi card */}
-                <div className="rounded-xl border border-[--border] bg-[--surface-2] p-5">
-                  <div className="inline-flex rounded-lg bg-[--surface-1] p-1 text-sm">
+                <div className="rounded-xl border border-border bg-surface-2 p-6 shadow-sm">
+                  <div className="inline-flex rounded-lg bg-surface-1 p-1 text-sm">
                     <button
                       onClick={() => gantiTab("baru")}
                       className={
-                        "px-4 py-1.5 rounded-md font-medium transition-colors " +
+                        "px-4 py-1.5 rounded-md font-semibold transition-all cursor-pointer " +
                         (tab === "baru"
-                          ? "bg-[--surface-2] text-blue-600 shadow-sm"
-                          : "text-[--text-secondary]")
+                          ? "bg-surface-2 text-blue-600 shadow-sm"
+                          : "text-text-secondary hover:text-text-primary")
                       }
                     >
                       Pasien Baru
@@ -503,10 +504,10 @@ export default function PendaftaranPasien() {
                     <button
                       onClick={() => gantiTab("lama")}
                       className={
-                        "px-4 py-1.5 rounded-md font-medium transition-colors " +
+                        "px-4 py-1.5 rounded-md font-semibold transition-all cursor-pointer " +
                         (tab === "lama"
-                          ? "bg-[--surface-2] text-blue-600 shadow-sm"
-                          : "text-[--text-secondary]")
+                          ? "bg-surface-2 text-blue-600 shadow-sm"
+                          : "text-text-secondary hover:text-text-primary")
                       }
                     >
                       Pasien Lama
@@ -515,8 +516,8 @@ export default function PendaftaranPasien() {
 
                   {tab === "baru" ? (
                     <>
-                      <h2 className="mt-5 text-lg font-medium">Data Pribadi</h2>
-                      <div className="mt-2 border-b border-[--border]" />
+                      <h2 className="mt-5 text-lg font-bold">Data Pribadi</h2>
+                      <div className="mt-2 border-b border-border" />
 
                       <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                         <div>
@@ -582,15 +583,15 @@ export default function PendaftaranPasien() {
                     </>
                   ) : (
                     <>
-                      <h2 className="mt-5 text-lg font-medium">Cari Pasien Terdaftar</h2>
-                      <div className="mt-2 border-b border-[--border]" />
-                      <p className="mt-3 text-sm text-[--text-secondary]">
+                      <h2 className="mt-5 text-lg font-bold">Cari Pasien Terdaftar</h2>
+                      <div className="mt-2 border-b border-border" />
+                      <p className="mt-3 text-sm text-text-secondary">
                         Cari berdasarkan NIK, No. Rekam Medis, atau Nama pasien.
                       </p>
 
                       {/* search box */}
                       <div className="relative mt-4">
-                        <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[--text-muted]" />
+                        <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
                         <input
                           className={inputBase + " pl-11"}
                           placeholder="Ketik NIK / No. RM / Nama..."
@@ -601,7 +602,7 @@ export default function PendaftaranPasien() {
                           <button
                             type="button"
                             onClick={() => { setQuery(""); setPasienTerpilih(null); setHasilCari([]); setSudahCari(false); }}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[--text-muted] hover:text-[--text-primary]"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary cursor-pointer"
                             aria-label="Hapus pencarian"
                           >
                             <X size={16} />
@@ -611,16 +612,16 @@ export default function PendaftaranPasien() {
 
                       {/* hasil pencarian / pasien terpilih */}
                       {pasienTerpilih ? (
-                        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50/60 p-4">
+                        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50/60 p-4 animate-fade-in">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-sm font-medium text-blue-700">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-blue-700">
                               <UserCheck size={16} />
                               Pasien Terpilih
                             </div>
                             <button
                               type="button"
                               onClick={() => setPasienTerpilih(null)}
-                              className="text-[--text-muted] hover:text-red-500"
+                              className="text-text-muted hover:text-red-500 cursor-pointer"
                               aria-label="Batal pilih"
                             >
                               <X size={16} />
@@ -642,7 +643,8 @@ export default function PendaftaranPasien() {
                       ) : (
                         <div className="mt-4 flex flex-col gap-2">
                           {mencari ? (
-                            <div className="text-sm text-[--text-secondary] py-6 text-center">
+                            <div className="flex items-center justify-center gap-2 text-sm text-text-secondary py-6 text-center">
+                              <Loader2 size={15} className="animate-spin" />
                               Mencari pasien...
                             </div>
                           ) : hasilCari.length > 0 ? (
@@ -651,25 +653,25 @@ export default function PendaftaranPasien() {
                                 key={p.id_pasien}
                                 type="button"
                                 onClick={() => setPasienTerpilih(p)}
-                                className="flex items-center justify-between rounded-lg border border-[--border] bg-[--surface-2] px-4 py-3 text-left hover:border-blue-400 hover:bg-blue-50/40 transition-colors cursor-pointer"
+                                className="flex items-center justify-between rounded-lg border border-border bg-surface-2 px-4 py-3 text-left hover:border-blue-400 hover:bg-blue-50/40 transition-colors cursor-pointer shadow-xs"
                               >
                                 <div className="flex flex-col">
-                                  <span className="text-sm font-medium text-[--text-primary]">{p.nama}</span>
-                                  <span className="text-xs text-[--text-secondary]">
+                                  <span className="text-sm font-semibold text-text-primary">{p.nama}</span>
+                                  <span className="text-xs text-text-secondary mt-0.5">
                                     No. RM {p.no_rm} • NIK {p.nik}
                                   </span>
                                 </div>
-                                <span className="text-xs text-[--text-secondary]">
+                                <span className="text-xs text-text-secondary font-medium">
                                   {p.jk === "L" ? "L" : p.jk === "P" ? "P" : "-"} • {hitungUmur(p.tgl_lahir)}
                                 </span>
                               </button>
                             ))
                           ) : sudahCari ? (
-                            <div className="text-sm text-[--text-secondary] py-6 text-center rounded-lg border border-dashed border-[--border]">
+                            <div className="text-sm text-text-secondary py-6 text-center rounded-lg border border-dashed border-border">
                               Tidak ada pasien ditemukan untuk “{query}”.
                             </div>
                           ) : (
-                            <div className="text-sm text-[--text-muted] py-6 text-center rounded-lg border border-dashed border-[--border]">
+                            <div className="text-sm text-text-muted py-6 text-center rounded-lg border border-dashed border-border">
                               Ketik minimal 2 karakter untuk mulai mencari.
                             </div>
                           )}
@@ -680,9 +682,9 @@ export default function PendaftaranPasien() {
                 </div>
 
                 {/* Informasi layanan card */}
-                <div className="rounded-xl border border-[--border] bg-[--surface-2] p-5">
-                  <h2 className="text-lg font-medium">Informasi Layanan</h2>
-                  <div className="mt-2 border-b border-[--border]" />
+                <div className="rounded-xl border border-border bg-surface-2 p-6 shadow-sm">
+                  <h2 className="text-lg font-bold">Informasi Layanan</h2>
+                  <div className="mt-2 border-b border-border" />
 
                   <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                     <div>
@@ -697,7 +699,6 @@ export default function PendaftaranPasien() {
                         ))}
                       </select>
                     </div>
-                    <div />
 
                     <div>
                       <label className={labelBase}>
@@ -730,25 +731,25 @@ export default function PendaftaranPasien() {
               </div>
 
               {/* Right column: preview */}
-              <div className="rounded-xl border border-[--border] bg-[--surface-2] overflow-hidden lg:sticky lg:top-6">
-                <div className="bg-blue-50 px-5 pt-5 pb-6 text-center">
-                  <span className="inline-block rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white">
+              <div className="rounded-xl border border-border bg-surface-2 overflow-hidden lg:sticky lg:top-6 shadow-md">
+                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 px-5 pt-6 pb-6 text-center shadow-inner">
+                  <span className="inline-block rounded-full bg-white/20 backdrop-blur-sm px-3.5 py-1 text-xs font-semibold text-white">
                     Pratinjau Antrean
                   </span>
-                  <div className="mt-4 text-sm text-[--text-secondary]">Nomor Antrean Anda</div>
-                  <div className="mt-1 text-3xl font-medium text-blue-600">
+                  <div className="mt-4 text-xs text-blue-100 uppercase tracking-widest font-semibold">Nomor Antrean Anda</div>
+                  <div className="mt-1 text-5xl font-black text-white tracking-tight drop-shadow-sm">
                     {ticketQueueNumber}
                   </div>
-                  <div className="mt-1 text-sm text-[--text-secondary]">{poliLabel}</div>
+                  <div className="mt-2 text-sm font-bold text-white bg-white/10 rounded-lg px-3 py-1 inline-block">{poliLabel}</div>
                 </div>
 
-                <div className="px-5 py-4 flex flex-col gap-3 text-sm">
+                <div className="px-5 py-5 flex flex-col gap-3 text-sm">
                   <Row label="Tanggal" value={tanggal} />
                   <Row label="Nama Pasien" value={namaPreview} />
                   <Row label="Penjamin" value={penjamin.split(" / ")[0]} />
                 </div>
 
-                <div className="px-5 pb-3 pt-1 text-center text-sm text-[--text-secondary]">
+                <div className="px-5 pb-3 pt-1 text-center text-xs text-text-secondary leading-relaxed">
                   Mohon tunggu panggilan di ruang tunggu poli.
                 </div>
 
@@ -756,7 +757,7 @@ export default function PendaftaranPasien() {
                   <button
                     onClick={tab === "baru" ? handleDaftarBaru : handleDaftarLama}
                     disabled={submitting || !bisaSubmit}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm active:scale-[0.98]"
                   >
                     <Printer size={16} />
                     {submitting ? "Menyimpan..." : "Daftar & Cetak Antrean"}
@@ -768,7 +769,7 @@ export default function PendaftaranPasien() {
         ) : (
           <>
             {errorAntrian && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-[--accent-red-soft] px-4 py-3 text-sm text-[--accent-red]">
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-accent-red-soft px-4 py-3 text-sm text-accent-red">
                 <AlertCircle size={16} />
                 {errorAntrian}
               </div>
@@ -777,7 +778,7 @@ export default function PendaftaranPasien() {
             {/* Poli Tabs Section */}
             <div className="mt-6 flex flex-wrap gap-3">
               {loadingAntrian && poliList.length === 0 ? (
-                <div className="text-sm text-[--text-secondary]">Memuat poliklinik...</div>
+                <div className="text-sm text-text-secondary">Memuat poliklinik...</div>
               ) : (
                 poliList.map((p) => {
                   const isActive = selectedPoli?.id_poli === p.id_poli;
@@ -785,10 +786,10 @@ export default function PendaftaranPasien() {
                     <button
                       key={p.id_poli}
                       onClick={() => setSelectedPoli(p)}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-[--radius-sm] text-sm font-semibold transition-all shadow-sm border cursor-pointer ${
+                      className={`flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold transition-all shadow-xs border cursor-pointer ${
                         isActive
-                          ? "bg-blue-600 border-blue-600 text-white"
-                          : "bg-[--card-bg] border-[--border-soft] hover:border-blue-400 text-[--text-primary]"
+                          ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                          : "bg-card-bg border-border-soft hover:border-blue-400 text-text-primary"
                       }`}
                     >
                       <Stethoscope size={16} />
@@ -803,8 +804,8 @@ export default function PendaftaranPasien() {
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 items-start pb-10">
                 {/* Left Column: Active Patient Examination Panel */}
                 <div className="flex flex-col gap-6">
-                  <div className="card-examine border-[--border-soft] bg-[--card-bg] rounded-[--radius-md] shadow-sm overflow-hidden border">
-                    <div className="bg-blue-50 border-b border-[--border-soft] px-5 py-4 flex items-center justify-between">
+                  <div className="card-examine border-border-soft bg-card-bg rounded-xl shadow-sm overflow-hidden border">
+                    <div className="bg-blue-50/50 border-b border-border-soft px-5 py-4 flex items-center justify-between">
                       <div className="flex items-center gap-2 text-blue-700 font-bold text-sm">
                         <Volume2 size={16} />
                         Sedang Diperiksa
@@ -819,26 +820,26 @@ export default function PendaftaranPasien() {
                       (() => {
                         const current = sedangDiperiksa[sedangDiperiksa.length - 1];
                         return (
-                          <div className="p-5 text-center flex flex-col items-center">
-                            <div className="text-sm text-[--text-secondary]">Nomor Antrean</div>
-                            <div className="mt-2 text-5xl font-black text-blue-600 tracking-wider">
+                          <div className="p-6 text-center flex flex-col items-center">
+                            <div className="text-xs text-text-secondary uppercase tracking-widest font-semibold">Nomor Antrean</div>
+                            <div className="mt-2 text-5xl font-black text-blue-600 queue-active-num">
                               {current.no_antrian}
                             </div>
-                            <div className="mt-3 text-lg font-bold text-[--text-primary]">
+                            <div className="mt-4 text-xl font-bold text-text-primary">
                               {current.nama_pasien}
                             </div>
-                            <div className="text-xs text-[--text-secondary] mt-1">
+                            <div className="text-xs text-text-secondary mt-1 font-medium font-semibold">
                               No. RM {current.no_rm} • {current.nama_penjamin || "Umum"}
                             </div>
 
-                            <div className="mt-4 border-t border-[--border-soft] w-full pt-4 flex flex-col gap-2.5 text-xs text-left">
+                            <div className="mt-5 border-t border-border-soft w-full pt-4 flex flex-col gap-2.5 text-xs text-left">
                               <div className="flex justify-between items-center">
-                                <span className="text-[--text-secondary]">Dokter Pemeriksa:</span>
-                                <span className="font-semibold">{current.nama_dokter || "-"}</span>
+                                <span className="text-text-secondary">Dokter Pemeriksa:</span>
+                                <span className="font-semibold text-text-primary">{current.nama_dokter || "-"}</span>
                               </div>
                               <div className="flex justify-between items-center">
-                                <span className="text-[--text-secondary]">Jenis Kelamin:</span>
-                                <span className="font-semibold">
+                                <span className="text-text-secondary">Jenis Kelamin:</span>
+                                <span className="font-semibold text-text-primary">
                                   {current.jk === "L" ? "Laki-laki" : current.jk === "P" ? "Perempuan" : "-"}
                                 </span>
                               </div>
@@ -864,57 +865,59 @@ export default function PendaftaranPasien() {
                         );
                       })()
                     ) : (
-                      <div className="p-8 text-center text-[--text-secondary]">
-                        <div className="flex justify-center mb-3">
-                          <Users size={32} className="text-[--text-secondary] opacity-50" />
+                      <div className="p-10 text-center">
+                        <div className="flex justify-center mb-4">
+                          <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center">
+                            <Users size={28} className="text-blue-300" />
+                          </div>
                         </div>
-                        <p className="text-sm font-medium">Tidak ada pasien sedang diperiksa.</p>
-                        <p className="text-xs text-[--text-secondary] mt-1">
-                          Silakan tekan tombol panggil pada daftar antrean untuk mulai memanggil pasien.
+                        <p className="text-sm font-bold text-text-primary">Tidak ada pasien sedang diperiksa</p>
+                        <p className="text-xs text-text-secondary mt-1.5 max-w-xs mx-auto leading-relaxed">
+                          Panggil pasien dari daftar antrean untuk memulai pemeriksaan.
                         </p>
                       </div>
                     )}
                   </div>
 
                   {/* Quick Info Summary */}
-                  <div className="bg-[--card-bg] border border-[--border-soft] rounded-[--radius-md] p-5 shadow-sm">
-                    <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+                  <div className="bg-card-bg border border-border-soft rounded-xl p-5 shadow-sm">
+                    <h3 className="text-sm font-bold mb-3 flex items-center gap-2 text-text-primary">
                       <Building2 size={16} className="text-blue-500" />
                       Ringkasan Antrean {selectedPoli.nama_poli}
                     </h3>
                     <div className="grid grid-cols-3 gap-3 text-center">
-                      <div className="bg-blue-50/50 p-3 rounded-[--radius-sm] border border-blue-100">
-                        <div className="text-lg font-bold text-blue-600">{antreanMenunggu.length}</div>
-                        <div className="text-[10px] font-semibold text-[--text-secondary] uppercase tracking-wide mt-0.5">Menunggu</div>
+                      <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                        <div className="text-xl font-bold text-blue-600">{antreanMenunggu.length}</div>
+                        <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mt-1">Menunggu</div>
                       </div>
-                      <div className="bg-amber-50/50 p-3 rounded-[--radius-sm] border border-amber-100">
-                        <div className="text-lg font-bold text-amber-600">{sedangDiperiksa.length}</div>
-                        <div className="text-[10px] font-semibold text-[--text-secondary] uppercase tracking-wide mt-0.5">Diperiksa</div>
+                      <div className="bg-amber-50/50 p-3 rounded-lg border border-amber-100">
+                        <div className="text-xl font-bold text-amber-600">{sedangDiperiksa.length}</div>
+                        <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mt-1">Diperiksa</div>
                       </div>
-                      <div className="bg-green-50/50 p-3 rounded-[--radius-sm] border border-green-100">
-                        <div className="text-lg font-bold text-green-600">{antreanSelesai.length}</div>
-                        <div className="text-[10px] font-semibold text-[--text-secondary] uppercase tracking-wide mt-0.5">Selesai</div>
+                      <div className="bg-green-50/50 p-3 rounded-lg border border-green-100">
+                        <div className="text-xl font-bold text-green-600">{antreanSelesai.length}</div>
+                        <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mt-1">Selesai</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Right Column: Queue Lists */}
-                <div className="flex flex-col gap-6 bg-[--card-bg] border border-[--border-soft] rounded-[--radius-md] shadow-sm overflow-hidden animate-fade-in">
+                <div className="flex flex-col gap-6 bg-card-bg border border-border-soft rounded-xl shadow-sm overflow-hidden animate-fade-in">
                   {/* Tabs / Subheaders */}
-                  <div className="border-b border-[--border-soft] px-5 py-4 flex items-center justify-between">
-                    <h2 className="text-base font-bold flex items-center gap-2">
+                  <div className="border-b border-border-soft px-5 py-4 flex items-center justify-between bg-surface-0/30">
+                    <h2 className="text-sm font-bold flex items-center gap-2 text-text-primary">
                       <Users size={18} className="text-blue-500" />
                       Daftar Antrean Hari Ini
                     </h2>
-                    <span className="text-xs text-[--text-secondary] font-medium">
+                    <span className="text-xs text-text-secondary font-semibold bg-surface-1 px-2.5 py-1 rounded-full">
                       Total: {antrianList.length} Pasien
                     </span>
                   </div>
 
                   {/* Waiting List Section */}
                   <div className="px-5 pb-5">
-                    <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-[--text-secondary] uppercase tracking-wide">
+                    <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-text-secondary uppercase tracking-wider">
                       <Clock size={13} className="text-amber-500" />
                       Menunggu Panggilan ({antreanMenunggu.length})
                     </div>
@@ -924,28 +927,28 @@ export default function PendaftaranPasien() {
                         {antreanMenunggu.map((item) => (
                           <div 
                             key={item.id_antrian}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-[--border-soft] bg-[--bg-page]/30 hover:border-blue-300 transition-colors gap-4 antrian-item"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border-soft bg-surface-1/30 hover:border-blue-300 hover:bg-blue-50/40 hover:shadow-xs transition-all gap-4 antrian-item"
                           >
                             <div className="flex items-start gap-4">
                               <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-blue-50 text-blue-600 font-bold text-lg border border-blue-100 shrink-0">
                                 {item.no_antrian}
                               </div>
                               <div>
-                                <div className="font-bold text-[--text-primary] text-sm flex items-center gap-2">
+                                <div className="font-bold text-text-primary text-sm flex items-center gap-2">
                                   {item.nama_pasien}
                                 </div>
-                                <div className="text-xs text-[--text-secondary] mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                <div className="text-xs text-text-secondary mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-medium">
                                   <span>RM: {item.no_rm}</span>
-                                  <span className="text-[--border-outer]">•</span>
+                                  <span className="text-border-outer">•</span>
                                   <span>PJM: {item.nama_penjamin || "Umum"}</span>
-                                  <span className="text-[--border-outer]">•</span>
+                                  <span className="text-border-outer">•</span>
                                   <span>Dr: {item.nama_dokter || "-"}</span>
                                 </div>
                               </div>
                             </div>
                             <button
                               onClick={() => handlePanggil(item)}
-                              className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shrink-0 cursor-pointer"
+                              className="flex items-center justify-center gap-1.5 px-4.5 py-2.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shrink-0 cursor-pointer shadow-xs"
                             >
                               <Volume2 size={13} />
                               Panggil
@@ -954,15 +957,16 @@ export default function PendaftaranPasien() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 border border-dashed border-[--border-soft] rounded-xl text-[--text-secondary] text-xs">
-                        Tidak ada pasien dalam daftar tunggu saat ini.
+                      <div className="text-center py-10 border border-dashed border-border-soft rounded-xl text-text-secondary">
+                        <Clock size={22} className="mx-auto mb-2 opacity-40" />
+                        <p className="text-xs">Tidak ada pasien dalam daftar tunggu saat ini.</p>
                       </div>
                     )}
                   </div>
 
                   {/* Finished List Section */}
-                  <div className="px-5 pb-5 border-t border-[--border-soft] pt-5">
-                    <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-[--text-secondary] uppercase tracking-wide">
+                  <div className="px-5 pb-5 border-t border-border-soft pt-5">
+                    <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-text-secondary uppercase tracking-wider">
                       <CheckCircle size={13} className="text-green-500" />
                       Selesai Diperiksa ({antreanSelesai.length})
                     </div>
@@ -972,15 +976,15 @@ export default function PendaftaranPasien() {
                         {antreanSelesai.map((item) => (
                           <div 
                             key={item.id_antrian}
-                            className="flex items-center justify-between p-3.5 rounded-lg border border-green-100 bg-green-50/20 text-xs antrian-item"
+                            className="flex items-center justify-between p-3.5 rounded-xl border border-green-100 bg-green-50/20 text-xs antrian-item"
                           >
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded bg-green-100/70 text-green-700 font-bold flex items-center justify-center shrink-0">
                                 {item.no_antrian}
                               </div>
                               <div>
-                                <div className="font-semibold text-[--text-primary] line-clamp-1">{item.nama_pasien}</div>
-                                <div className="text-[10px] text-[--text-secondary] mt-0.5">RM: {item.no_rm}</div>
+                                <div className="font-bold text-text-primary line-clamp-1">{item.nama_pasien}</div>
+                                <div className="text-[10px] text-text-secondary mt-0.5 font-medium">RM: {item.no_rm}</div>
                               </div>
                             </div>
                             <span className="flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full uppercase shrink-0">
@@ -991,8 +995,9 @@ export default function PendaftaranPasien() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-6 border border-dashed border-[--border-soft] rounded-xl text-[--text-secondary] text-xs">
-                        Belum ada pasien yang selesai diperiksa hari ini.
+                      <div className="text-center py-8 border border-dashed border-border-soft rounded-xl text-text-secondary">
+                        <CheckCircle size={22} className="mx-auto mb-2 opacity-40" />
+                        <p className="text-xs">Belum ada pasien yang selesai diperiksa hari ini.</p>
                       </div>
                     )}
                   </div>
@@ -1008,9 +1013,9 @@ export default function PendaftaranPasien() {
 
 function Row({ label, value }) {
   return (
-    <div className="flex items-center justify-between border-b border-[--border] pb-3 last:border-0 last:pb-0">
-      <span className="text-[--text-secondary]">{label}</span>
-      <span className="font-medium">{value}</span>
+    <div className="flex items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0">
+      <span className="text-text-secondary">{label}</span>
+      <span className="font-semibold text-text-primary">{value}</span>
     </div>
   );
 }
@@ -1018,9 +1023,9 @@ function Row({ label, value }) {
 function InfoItem({ icon: Icon, label, value }) {
   return (
     <div className="flex items-center gap-2">
-      <Icon size={15} className="text-[--text-secondary] shrink-0" />
-      <span className="text-[--text-secondary]">{label}:</span>
-      <span className="font-medium text-[--text-primary] break-all">{value}</span>
+      <Icon size={15} className="text-text-secondary shrink-0" />
+      <span className="text-text-secondary font-medium">{label}:</span>
+      <span className="font-semibold text-text-primary break-all">{value}</span>
     </div>
   );
 }

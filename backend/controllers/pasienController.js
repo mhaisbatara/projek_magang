@@ -1,78 +1,56 @@
 import pool from '../config/db.js';
-import { formatNoAntrian, resolvePenjamin, resolveDokter } from './pendaftaranController.js';
+import { formatNoAntrian, resolvePenjamin } from './pendaftaranController.js';
+
+async function generateIdPasien(conn) {
+  const [rows] = await conn.query(
+    "SELECT id FROM mst_pasien ORDER BY id DESC LIMIT 1 FOR UPDATE"
+  );
+  if (rows.length === 0) return "PSN01";
+  const lastNumber = parseInt(rows[0].id.replace("PSN", ""), 10);
+  return "PSN" + String(lastNumber + 1).padStart(2, "0");
+}
 
 async function generateNoRm(conn) {
   const [rows] = await conn.query(
-    "SELECT no_rm FROM pasien ORDER BY no_rm DESC LIMIT 1 FOR UPDATE"
+    "SELECT no_rm FROM mst_pasien ORDER BY no_rm DESC LIMIT 1 FOR UPDATE"
   );
   if (rows.length === 0) return "RM0001";
   const lastNumber = parseInt(rows[0].no_rm.replace("RM", ""), 10);
   return "RM" + String(lastNumber + 1).padStart(4, "0");
 }
 
-async function generateIdPasien(conn) {
-  const [rows] = await conn.query(
-    "SELECT id_pasien FROM pasien ORDER BY id_pasien DESC LIMIT 1 FOR UPDATE"
-  );
-  if (rows.length === 0) return "PSN0001";
-  const lastNumber = parseInt(rows[0].id_pasien.replace("PSN", ""), 10);
-  return "PSN" + String(lastNumber + 1).padStart(4, "0");
-}
-
-async function generateIdPendaftaran(conn) {
-  const [rows] = await conn.query(
-    "SELECT id_pendaftaran FROM pendaftaran ORDER BY id_pendaftaran DESC LIMIT 1 FOR UPDATE"
-  );
-  if (rows.length === 0) return "REG0001";
-  const lastNumber = parseInt(rows[0].id_pendaftaran.replace("REG", ""), 10);
-  return "REG" + String(lastNumber + 1).padStart(4, "0");
-}
-
 async function generateIdAntrian(conn) {
   const [rows] = await conn.query(
-    "SELECT id_antrian FROM antrian ORDER BY id_antrian DESC LIMIT 1 FOR UPDATE"
+    "SELECT id FROM mst_antrian ORDER BY id DESC LIMIT 1 FOR UPDATE"
   );
-  if (rows.length === 0) return "ANT0001";
-  const lastNumber = parseInt(rows[0].id_antrian.replace("ANT", ""), 10);
-  return "ANT" + String(lastNumber + 1).padStart(4, "0");
+  if (rows.length === 0) return "ANT01";
+  const lastNumber = parseInt(rows[0].id.replace("ANT", ""), 10);
+  return "ANT" + String(lastNumber + 1).padStart(2, "0");
 }
 
-async function generateNoUrut(conn, id_poli) {
+async function generateKodeAntrian(conn) {
+  const [[ymdRow]] = await conn.query("SELECT DATE_FORMAT(CURDATE(), '%Y%m%d') AS ymd");
   const [rows] = await conn.query(
-    `SELECT COALESCE(MAX(a.no_urut), 0) AS max_no
-     FROM antrian a
-     JOIN pendaftaran p ON a.id_pendaftaran = p.id_pendaftaran
-     WHERE p.id_poli = ? AND p.tanggal = CURDATE() FOR UPDATE`,
-    [id_poli]
+    "SELECT COUNT(*) AS total FROM mst_antrian WHERE tanggal = CURDATE() FOR UPDATE"
   );
-  return (rows[0]?.max_no || 0) + 1;
+  const seq = (rows[0]?.total || 0) + 1;
+  return `ANT-${ymdRow.ymd}-${String(seq).padStart(3, "0")}`;
+}
+
+async function generateNoUrut(conn, kode_poli) {
+  const [rows] = await conn.query(
+    `SELECT COUNT(*) AS total FROM mst_antrian WHERE kode_poli = ? AND tanggal = CURDATE() FOR UPDATE`,
+    [kode_poli]
+  );
+  return (rows[0]?.total || 0) + 1;
 }
 
 export const createPasien = async (req, res) => {
   try {
     const { nik, nama, tgl_lahir, jk, alamat, telepon, poli, penjamin, dokter } = req.body;
 
-    if (!nik || !nama || !tgl_lahir || !jk) {
-      return res.status(400).json({ message: "NIK, nama, tanggal lahir, dan jenis kelamin wajib diisi" });
-    }
-
-    const [existing] = await pool.query("SELECT id_pasien FROM pasien WHERE nik = ?", [nik]);
-    if (existing.length > 0) {
-      return res.status(409).json({ message: "NIK sudah terdaftar" });
-    }
-
-    // Lookup id_poli berdasarkan nama_poli (jika dikirim)
-    let id_poli = null;
-    let nama_poli = "";
-    if (poli) {
-      const [poliRow] = await pool.query(
-        "SELECT id_poli, nama_poli FROM poli WHERE nama_poli = ? LIMIT 1",
-        [poli]
-      );
-      if (poliRow.length > 0) {
-        id_poli = poliRow[0].id_poli;
-        nama_poli = poliRow[0].nama_poli;
-      }
+    if (!nama || !tgl_lahir || !jk) {
+      return res.status(400).json({ message: "Nama, tanggal lahir, dan jenis kelamin wajib diisi" });
     }
 
     const conn = await pool.getConnection();
@@ -82,41 +60,41 @@ export const createPasien = async (req, res) => {
       const id_pasien = await generateIdPasien(conn);
       const no_rm = await generateNoRm(conn);
 
+      // Resolve penjamin (stored on pasien table now)
+      const id_penjamin = await resolvePenjamin(conn, penjamin);
+
       // Insert patient
       await conn.query(
-        "INSERT INTO pasien (id_pasien, id_poli, no_rm, nik, nama, tgl_lahir, jk, alamat, telepon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [id_pasien, id_poli, no_rm, nik, nama, tgl_lahir, jk, alamat, telepon]
+        "INSERT INTO mst_pasien (id, no_rm, nama_pasien, tanggal_lahir, jk, alamat, no_hp, kode_penjamin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [id_pasien, no_rm, nama, tgl_lahir, jk, alamat, telepon, id_penjamin]
       );
 
       let no_urut = null;
       let no_antrian = null;
+      let nama_poli = "";
 
-      if (id_poli) {
-        // Resolve penjamin
-        const id_penjamin = await resolvePenjamin(conn, penjamin);
-
-        // Resolve dokter
-        const id_dokter = await resolveDokter(conn, id_poli, dokter);
-
-        // Generate ids and queue
-        const id_pendaftaran = await generateIdPendaftaran(conn);
-        const id_antrian = await generateIdAntrian(conn);
-        no_urut = await generateNoUrut(conn, id_poli);
-        no_antrian = formatNoAntrian(id_poli, no_urut);
-
-        // Insert pendaftaran
-        await conn.query(
-          `INSERT INTO pendaftaran (id_pendaftaran, id_pasien, id_poli, id_dokter, id_penjamin, tanggal, status)
-           VALUES (?, ?, ?, ?, ?, CURDATE(), 'menunggu')`,
-          [id_pendaftaran, id_pasien, id_poli, id_dokter, id_penjamin]
+      // If poli is provided, create antrian
+      if (poli) {
+        let id_poli = null;
+        const [poliRow] = await conn.query(
+          "SELECT id, nama_poli FROM mst_poli WHERE nama_poli = ? LIMIT 1",
+          [poli]
         );
+        if (poliRow.length > 0) {
+          id_poli = poliRow[0].id;
+          nama_poli = poliRow[0].nama_poli;
 
-        // Insert antrian
-        await conn.query(
-          `INSERT INTO antrian (id_antrian, id_pendaftaran, no_urut, status_panggil, waktu_panggil)
-           VALUES (?, ?, ?, 'menunggu', NULL)`,
-          [id_antrian, id_pendaftaran, no_urut]
-        );
+          const id_antrian = await generateIdAntrian(conn);
+          const kode_antrian = await generateKodeAntrian(conn);
+          no_urut = await generateNoUrut(conn, id_poli);
+          no_antrian = formatNoAntrian(id_poli, no_urut);
+
+          await conn.query(
+            `INSERT INTO mst_antrian (id, kode_antrian, no_antrian, no_rm, kode_poli, tanggal, status_panggil)
+             VALUES (?, ?, ?, ?, ?, CURDATE(), 'menunggu')`,
+            [id_antrian, kode_antrian, no_antrian, no_rm, id_poli]
+          );
+        }
       }
 
       await conn.commit();
@@ -125,9 +103,8 @@ export const createPasien = async (req, res) => {
         message: "Pasien berhasil didaftarkan",
         data: {
           id_pasien,
-          id_poli,
           no_rm,
-          nik,
+          nik: nik || null,
           nama,
           tgl_lahir,
           jk,
@@ -152,7 +129,7 @@ export const createPasien = async (req, res) => {
 
 export const getAllPasien = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM pasien ORDER BY id_pasien DESC");
+    const [rows] = await pool.query("SELECT * FROM mst_pasien ORDER BY id DESC");
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -171,14 +148,15 @@ export const cariPasien = async (req, res) => {
 
     const like = `%${term}%`;
     const [rows] = await pool.query(
-      `SELECT p.id_pasien, p.no_rm, p.nik, p.nama, p.tgl_lahir, p.jk, p.alamat, p.telepon,
-              p.id_poli, poli.nama_poli
-       FROM pasien p
-       LEFT JOIN poli ON poli.id_poli = p.id_poli
-       WHERE p.nik LIKE ? OR p.no_rm LIKE ? OR p.nama LIKE ?
-       ORDER BY p.nama ASC
+      `SELECT p.id AS id_pasien, p.no_rm, NULL AS nik, p.nama_pasien AS nama, p.tanggal_lahir AS tgl_lahir,
+              p.jk, p.alamat, p.no_hp AS telepon, p.kode_penjamin AS id_penjamin,
+              pen.nama_penjamin
+       FROM mst_pasien p
+       LEFT JOIN mst_penjamin pen ON pen.kode_penjamin = p.kode_penjamin
+       WHERE p.no_rm LIKE ? OR p.nama_pasien LIKE ?
+       ORDER BY p.nama_pasien ASC
        LIMIT 20`,
-      [like, like, like]
+      [like, like]
     );
 
     return res.json(rows);

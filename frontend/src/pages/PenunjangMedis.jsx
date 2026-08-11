@@ -1,9 +1,7 @@
 import {
-  FlaskConical,
   Pill,
   Microscope,
   ClipboardList,
-  FileText,
   PackageCheck,
   TestTube,
   AlertCircle,
