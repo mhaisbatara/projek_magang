@@ -64,7 +64,6 @@ function App() {
             }
           />
           <Route
-
             path="/administration"
             element={
               <ProtectedRoute>
@@ -98,7 +97,12 @@ function App() {
                   <Sidebar activeKey="penunjang" />
                   <main className="app-content">
                     <PenunjangMedis />
-
+                  </main>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/logistik"
             element={
               <ProtectedRoute>
@@ -106,7 +110,6 @@ function App() {
                   <Sidebar activeKey="logistik" />
                   <main className="app-content">
                     <Logistik />
-
                   </main>
                 </div>
               </ProtectedRoute>

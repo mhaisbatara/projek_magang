@@ -2,6 +2,16 @@ import pool from "../config/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+// Helper to generate id (e.g., USR01) inside transaction
+async function generateIdUser(conn) {
+  const [rows] = await conn.query(
+    "SELECT id FROM mst_user ORDER BY id DESC LIMIT 1 FOR UPDATE"
+  );
+  if (rows.length === 0) return "USR01";
+  const lastNumber = parseInt(rows[0].id.replace("USR", ""), 10);
+  return "USR" + String(lastNumber + 1).padStart(2, "0");
+}
+
 // =======================
 // REGISTER
 // =======================
@@ -23,55 +33,53 @@ export const register = async (req, res) => {
       });
     }
 
-    // Cek username
+    // Cek email
     const [cek] = await pool.query(
-      "SELECT * FROM user_staff WHERE username = ?",
+      "SELECT * FROM mst_user WHERE email = ?",
       [username]
     );
 
     if (cek.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Username sudah digunakan",
+        message: "Email sudah digunakan",
       });
     }
 
     // Hash password
     const hash = await bcrypt.hash(password, 10);
 
-    // Ambil id_user terakhir
-    const [lastUser] = await pool.query(
-      "SELECT id_user FROM user_staff ORDER BY id_user DESC LIMIT 1"
-    );
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
 
-    let idUser = "USR0001";
+      const idUser = await generateIdUser(conn);
 
-    if (lastUser.length > 0) {
-      const nomor =
-        parseInt(lastUser[0].id_user.replace("USR", "")) + 1;
+      // Simpan user baru (role default: ROL01 / Super Admin)
+      await conn.query(
+        `INSERT INTO mst_user
+        (id, kode_role, email, password)
+        VALUES (?, ?, ?, ?)`,
+        [
+          idUser,
+          "ROL01",
+          username,
+          hash,
+        ]
+      );
 
-      idUser = "USR" + nomor.toString().padStart(4, "0");
+      await conn.commit();
+
+      res.status(201).json({
+        success: true,
+        message: "Register berhasil",
+      });
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
     }
-
-    // Simpan user baru
-    await pool.query(
-      `INSERT INTO user_staff
-      (id_user, id_role, nama, username, password)
-      VALUES (?, ?, ?, ?, ?)`,
-      [
-        idUser,
-        "ROL0007",
-        nama,
-        username,
-        hash,
-      ]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: "Register berhasil",
-    });
-
   } catch (err) {
     console.log(err);
 
@@ -91,14 +99,14 @@ export const login = async (req, res) => {
     const { username, password } = req.body;
 
     const [rows] = await pool.query(
-      "SELECT * FROM user_staff WHERE username = ?",
+      "SELECT * FROM mst_user WHERE email = ?",
       [username]
     );
 
     if (rows.length === 0) {
       return res.status(401).json({
         success: false,
-        message: "Username tidak ditemukan",
+        message: "Email tidak ditemukan",
       });
     }
 
@@ -118,9 +126,9 @@ export const login = async (req, res) => {
 
     const token = jwt.sign(
       {
-        id: user.id_user,
-        nama: user.nama,
-        role: user.id_role,
+        id: user.id,
+        nama: user.email,
+        role: user.kode_role,
       },
       process.env.JWT_SECRET,
       {
@@ -133,10 +141,10 @@ export const login = async (req, res) => {
       message: "Login berhasil",
       token,
       user: {
-        id: user.id_user,
-        nama: user.nama,
-        username: user.username,
-        role: user.id_role,
+        id: user.id,
+        nama: user.email,
+        username: user.email,
+        role: user.kode_role,
       },
     });
 
