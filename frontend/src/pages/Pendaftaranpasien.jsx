@@ -16,11 +16,12 @@ import {
   CheckCircle,
   Clock,
   Building2,
-  UserPlus
+  UserPlus,
+  RotateCcw
 } from "lucide-react";
 import Topbar from "../components/Topbar";
 import api from "../services/api";
-import "./PelayananMedis.css";
+import "./Pendaftaranpasien.css";
 
 
 // Default fallback options for poliklinik
@@ -55,7 +56,7 @@ function hitungUmur(tgl) {
 }
 
 export default function PendaftaranPasien() {
-  const [activeMenu, setActiveMenu] = useState("pendaftaran"); // "pendaftaran" | "antrean"
+  const [activeMenu, setActiveMenu] = useState("pendaftaran"); // "pendaftaran" | "antrean" | "antrianAwal"
   const [tab, setTab] = useState("baru");
 
   // form pasien baru
@@ -89,6 +90,11 @@ export default function PendaftaranPasien() {
   const [antrianList, setAntrianList] = useState([]);
   const [loadingAntrian, setLoadingAntrian] = useState(false);
   const [errorAntrian, setErrorAntrian] = useState(null);
+
+  // states for antrian awal (nomor fisik 01-50 yang sudah dibagikan klinik sebelum daftar)
+  const [antrianAwalList, setAntrianAwalList] = useState([]);
+  const [loadingAwal, setLoadingAwal] = useState(false);
+  const [errorAwal, setErrorAwal] = useState(null);
 
   const poliLabel = poli === poliOptions[0] ? "Poli Umum" : poli;
   const tanggal = useMemo(() => todayLabel(), []);
@@ -156,6 +162,28 @@ export default function PendaftaranPasien() {
     return () => { mounted = false; clearInterval(interval); };
   }, [selectedPoli, activeMenu]);
 
+  // Fetch antrian awal (nomor fisik 01-50) saat tab Antrian Awal aktif
+  const fetchAntrianAwal = async () => {
+    try {
+      setLoadingAwal(true);
+      const { data } = await api.get("/pendaftaran/antrian-awal");
+      setAntrianAwalList(data);
+      setErrorAwal(null);
+    } catch (err) {
+      console.error("Gagal memuat antrian awal:", err);
+      setErrorAwal("Gagal memuat data antrean awal dari server.");
+    } finally {
+      setLoadingAwal(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeMenu !== "antrianAwal") return;
+    fetchAntrianAwal();
+    const interval = setInterval(fetchAntrianAwal, 10000);
+    return () => clearInterval(interval);
+  }, [activeMenu]);
+
   // Audio Voice Caller (Text to Speech)
   const playSpeechCall = (noAntrian, namaPoli) => {
     if ("speechSynthesis" in window) {
@@ -174,6 +202,19 @@ export default function PendaftaranPasien() {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "id-ID";
       utterance.rate = 0.85; // Natural speed
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Audio Voice Caller khusus nomor antrean awal (01-50, tanpa prefix huruf poli)
+  const playSpeechAwal = (noAntrian) => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const text = `Nomor antrean ${noAntrian}, silakan menuju ke loket pendaftaran`;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "id-ID";
+      utterance.rate = 0.85;
       utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);
     }
@@ -203,6 +244,35 @@ export default function PendaftaranPasien() {
     } catch (err) {
       console.error("Gagal menyelesaikan pemeriksaan:", err);
       alert("Gagal menyelesaikan pemeriksaan.");
+    }
+  };
+
+  // Panggil nomor antrean awal (01-50). Kalau masih "tersedia", langsung ditandai "terpakai".
+  // Kalau sudah "terpakai", klik lagi cuma memanggil ulang tanpa mengubah status.
+  const handlePanggilAwal = async (item) => {
+    try {
+      playSpeechAwal(item.no_antrian);
+      if (item.status === "tersedia") {
+        await api.put(`/pendaftaran/antrian-awal/${item.kode_antrian}/status`, {
+          status: "terpakai"
+        });
+        fetchAntrianAwal();
+      }
+    } catch (err) {
+      console.error("Gagal memanggil nomor antrean awal:", err);
+      alert("Gagal memanggil nomor antrean.");
+    }
+  };
+
+  // Reset semua nomor antrean awal kembali ke "tersedia" (dipakai di awal hari kerja)
+  const handleResetAwal = async () => {
+    if (!window.confirm("Reset semua nomor antrean awal ke status tersedia untuk hari ini?")) return;
+    try {
+      await api.put("/pendaftaran/antrian-awal/reset");
+      fetchAntrianAwal();
+    } catch (err) {
+      console.error("Gagal mereset antrean awal:", err);
+      alert("Gagal mereset antrean awal.");
     }
   };
 
@@ -397,6 +467,10 @@ export default function PendaftaranPasien() {
   const antreanMenunggu = antrianList.filter(a => a.status_panggil === "menunggu");
   const antreanSelesai = antrianList.filter(a => a.status_panggil === "selesai");
 
+  // Group antrian awal by status
+  const awalTersedia = antrianAwalList.filter(a => a.status === "tersedia");
+  const awalTerpakai = antrianAwalList.filter(a => a.status === "terpakai");
+
   return (
     <div className="flex flex-col h-full bg-surface-0 text-text-primary overflow-hidden">
       <Topbar />
@@ -405,12 +479,18 @@ export default function PendaftaranPasien() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              {activeMenu === "pendaftaran" ? "Pendaftaran Pasien" : "Antrean Poliklinik"}
+              {activeMenu === "pendaftaran"
+                ? "Pendaftaran Pasien"
+                : activeMenu === "antrean"
+                ? "Antrean Poliklinik"
+                : "Antrian Awal"}
             </h1>
             <p className="mt-1 text-sm text-text-secondary">
               {activeMenu === "pendaftaran"
                 ? "Registrasi antrean untuk pelayanan poliklinik."
-                : "Pemanggilan dan pemeriksaan pasien poliklinik hari ini."}
+                : activeMenu === "antrean"
+                ? "Pemanggilan dan pemeriksaan pasien poliklinik hari ini."
+                : "Panggil nomor antrean awal (01–50) yang sudah dibagikan klinik sebelum pasien mendaftar."}
             </p>
           </div>
           {activeMenu === "antrean" && (
@@ -430,6 +510,18 @@ export default function PendaftaranPasien() {
 
         {/* Tab switcher at the top */}
         <div className="mt-5 mb-6 flex gap-1.5 p-1 bg-surface-1 rounded-xl w-fit border border-border shadow-xs">
+          <button
+            type="button"
+            onClick={() => setActiveMenu("antrianAwal")}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+              activeMenu === "antrianAwal"
+                ? "bg-surface-2 text-blue-600 shadow-sm font-bold"
+                : "text-text-secondary hover:text-text-primary hover:bg-surface-2/40"
+            }`}
+          >
+            <Volume2 size={16} />
+            <span>Antrian Awal</span>
+          </button>
           <button
             type="button"
             onClick={() => setActiveMenu("pendaftaran")}
@@ -668,7 +760,7 @@ export default function PendaftaranPasien() {
                             ))
                           ) : sudahCari ? (
                             <div className="text-sm text-text-secondary py-6 text-center rounded-lg border border-dashed border-border">
-                              Tidak ada pasien ditemukan untuk “{query}”.
+                              Tidak ada pasien ditemukan untuk "{query}".
                             </div>
                           ) : (
                             <div className="text-sm text-text-muted py-6 text-center rounded-lg border border-dashed border-border">
@@ -766,7 +858,7 @@ export default function PendaftaranPasien() {
               </div>
             </div>
           </>
-        ) : (
+        ) : activeMenu === "antrean" ? (
           <>
             {errorAntrian && (
               <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-accent-red-soft px-4 py-3 text-sm text-accent-red">
@@ -833,13 +925,13 @@ export default function PendaftaranPasien() {
                             </div>
 
                             <div className="mt-5 border-t border-border-soft w-full pt-4 flex flex-col gap-2.5 text-xs text-left">
-                              <div className="flex justify-between items-center">
-                                <span className="text-text-secondary">Dokter Pemeriksa:</span>
-                                <span className="font-semibold text-text-primary">{current.nama_dokter || "-"}</span>
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-text-secondary shrink-0">Dokter Pemeriksa:</span>
+                                <span className="font-semibold text-text-primary text-right truncate">{current.nama_dokter || "-"}</span>
                               </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-text-secondary">Jenis Kelamin:</span>
-                                <span className="font-semibold text-text-primary">
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-text-secondary shrink-0">Jenis Kelamin:</span>
+                                <span className="font-semibold text-text-primary text-right truncate">
                                   {current.jk === "L" ? "Laki-laki" : current.jk === "P" ? "Perempuan" : "-"}
                                 </span>
                               </div>
@@ -903,7 +995,7 @@ export default function PendaftaranPasien() {
                 </div>
 
                 {/* Right Column: Queue Lists */}
-                <div className="flex flex-col gap-6 bg-card-bg border border-border-soft rounded-xl shadow-sm overflow-hidden animate-fade-in">
+                <div className="flex flex-col gap-6 bg-card-bg border border-border-soft rounded-xl shadow-sm overflow-hidden animate-fade-in self-start">
                   {/* Tabs / Subheaders */}
                   <div className="border-b border-border-soft px-5 py-4 flex items-center justify-between bg-surface-0/30">
                     <h2 className="text-sm font-bold flex items-center gap-2 text-text-primary">
@@ -957,8 +1049,8 @@ export default function PendaftaranPasien() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-10 border border-dashed border-border-soft rounded-xl text-text-secondary">
-                        <Clock size={22} className="mx-auto mb-2 opacity-40" />
+                      <div className="text-center py-6 border border-dashed border-border-soft rounded-xl text-text-secondary">
+                        <Clock size={20} className="mx-auto mb-2 opacity-40" />
                         <p className="text-xs">Tidak ada pasien dalam daftar tunggu saat ini.</p>
                       </div>
                     )}
@@ -995,8 +1087,8 @@ export default function PendaftaranPasien() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 border border-dashed border-border-soft rounded-xl text-text-secondary">
-                        <CheckCircle size={22} className="mx-auto mb-2 opacity-40" />
+                      <div className="text-center py-5 border border-dashed border-border-soft rounded-xl text-text-secondary">
+                        <CheckCircle size={20} className="mx-auto mb-2 opacity-40" />
                         <p className="text-xs">Belum ada pasien yang selesai diperiksa hari ini.</p>
                       </div>
                     )}
@@ -1004,6 +1096,98 @@ export default function PendaftaranPasien() {
                 </div>
               </div>
             )}
+          </>
+        ) : (
+          <>
+            {/* ===================== ANTRIAN AWAL ===================== */}
+            {errorAwal && (
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <AlertCircle size={16} />
+                {errorAwal}
+              </div>
+            )}
+
+            <div className="mt-6 bg-card-bg border border-border-soft rounded-xl shadow-sm overflow-hidden">
+              <div className="bg-blue-50/50 border-b border-border-soft px-5 py-4 flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h2 className="text-sm font-bold flex items-center gap-2 text-text-primary">
+                    <Volume2 size={16} className="text-blue-600" />
+                    Panggilan Nomor Antrean Awal
+                  </h2>
+                  <p className="text-xs text-text-secondary mt-1">
+                    Klik nomor yang <strong>tersedia</strong> untuk memanggil ke loket pendaftaran. Klik lagi nomor yang sudah dipanggil untuk memanggil ulang.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResetAwal}
+                  className="flex items-center gap-1.5 text-xs font-bold text-red-600 border border-red-200 rounded-lg px-3.5 py-2 hover:bg-red-50 transition-colors cursor-pointer shrink-0"
+                >
+                  <RotateCcw size={13} />
+                  Reset Harian
+                </button>
+              </div>
+
+              <div className="p-5">
+                {/* Ringkasan */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5 max-w-md">
+                  <div className="bg-surface-1/50 p-3 rounded-lg border border-border-soft text-center">
+                    <div className="text-xl font-bold text-text-primary">{antrianAwalList.length}</div>
+                    <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mt-1">Total Nomor</div>
+                  </div>
+                  <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100 text-center">
+                    <div className="text-xl font-bold text-blue-600">{awalTersedia.length}</div>
+                    <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mt-1">Tersedia</div>
+                  </div>
+                  <div className="bg-green-50/50 p-3 rounded-lg border border-green-100 text-center">
+                    <div className="text-xl font-bold text-green-600">{awalTerpakai.length}</div>
+                    <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mt-1">Sudah Dipanggil</div>
+                  </div>
+                </div>
+
+                {loadingAwal && antrianAwalList.length === 0 ? (
+                  <div className="text-sm text-text-secondary flex items-center gap-2 py-6 justify-center">
+                    <Loader2 size={15} className="animate-spin" />
+                    Memuat nomor antrean awal...
+                  </div>
+                ) : antrianAwalList.length === 0 ? (
+                  <div className="text-center py-8 border border-dashed border-border-soft rounded-xl text-text-secondary">
+                    <Volume2 size={20} className="mx-auto mb-2 opacity-40" />
+                    <p className="text-xs">Belum ada data nomor antrean awal.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">
+                    {antrianAwalList.map((item) => {
+                      const terpakai = item.status === "terpakai";
+                      return (
+                        <button
+                          key={item.kode_antrian}
+                          type="button"
+                          onClick={() => handlePanggilAwal(item)}
+                          title={terpakai ? "Panggil ulang" : "Panggil"}
+                          className={`aspect-square rounded-lg border text-sm font-bold flex items-center justify-center transition-all cursor-pointer antrian-awal-num ${
+                            terpakai
+                              ? "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                              : "bg-surface-2 border-border text-text-primary hover:border-blue-400 hover:bg-blue-50"
+                          }`}
+                        >
+                          {item.no_antrian}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="mt-5 flex items-center gap-4 text-xs text-text-secondary">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-sm bg-surface-2 border border-border inline-block" /> Tersedia
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-sm bg-green-50 border border-green-200 inline-block" /> Sudah dipanggil
+                  </span>
+                </div>
+              </div>
+            </div>
           </>
         )}
       </main>

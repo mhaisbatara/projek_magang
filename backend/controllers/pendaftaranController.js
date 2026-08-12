@@ -220,11 +220,15 @@ export const getAntrianList = async (req, res) => {
         pas.nama_pasien,
         pas.jk,
         pas.tanggal_lahir,
-        pen.nama_penjamin
+        pen.nama_penjamin,
+        dok.nama_dokter
       FROM mst_antrian a
       JOIN mst_poli ON mst_poli.kode_poli = a.kode_poli
       JOIN mst_pasien pas ON pas.no_rm = a.no_rm
       LEFT JOIN mst_penjamin pen ON pen.kode_penjamin = pas.kode_penjamin
+      LEFT JOIN mst_jadwal_dokter jd ON jd.kode_poli = a.kode_poli
+        AND jd.hari = ELT(WEEKDAY(CURDATE()) + 1, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')
+      LEFT JOIN mst_dokter dok ON dok.no_sip = jd.no_sip
       WHERE a.tanggal = CURDATE()
     `;
 

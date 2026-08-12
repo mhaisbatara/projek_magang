@@ -49,6 +49,9 @@ export const createPasien = async (req, res) => {
   try {
     const { nik, nama, tgl_lahir, jk, alamat, telepon, poli, penjamin, dokter } = req.body;
 
+    if (!nik || String(nik).length !== 16) {
+      return res.status(400).json({ message: "NIK wajib diisi 16 digit" });
+    }
     if (!nama || !tgl_lahir || !jk) {
       return res.status(400).json({ message: "Nama, tanggal lahir, dan jenis kelamin wajib diisi" });
     }
@@ -65,8 +68,8 @@ export const createPasien = async (req, res) => {
 
       // Insert patient
       await conn.query(
-        "INSERT INTO mst_pasien (id, no_rm, nama_pasien, tanggal_lahir, jk, alamat, no_hp, kode_penjamin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        [id_pasien, no_rm, nama, tgl_lahir, jk, alamat, telepon, id_penjamin]
+        "INSERT INTO mst_pasien (id, no_rm, nik, nama_pasien, tanggal_lahir, jk, alamat, no_hp, kode_penjamin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [id_pasien, no_rm, nik, nama, tgl_lahir, jk, alamat, telepon, id_penjamin]
       );
 
       let no_urut = null;
@@ -104,7 +107,7 @@ export const createPasien = async (req, res) => {
         data: {
           id_pasien,
           no_rm,
-          nik: nik || null,
+          nik,
           nama,
           tgl_lahir,
           jk,
@@ -148,15 +151,15 @@ export const cariPasien = async (req, res) => {
 
     const like = `%${term}%`;
     const [rows] = await pool.query(
-      `SELECT p.id AS id_pasien, p.no_rm, NULL AS nik, p.nama_pasien AS nama, p.tanggal_lahir AS tgl_lahir,
+      `SELECT p.id AS id_pasien, p.no_rm, p.nik, p.nama_pasien AS nama, p.tanggal_lahir AS tgl_lahir,
               p.jk, p.alamat, p.no_hp AS telepon, p.kode_penjamin AS id_penjamin,
               pen.nama_penjamin
        FROM mst_pasien p
        LEFT JOIN mst_penjamin pen ON pen.kode_penjamin = p.kode_penjamin
-       WHERE p.no_rm LIKE ? OR p.nama_pasien LIKE ?
+       WHERE p.no_rm LIKE ? OR p.nama_pasien LIKE ? OR p.nik LIKE ?
        ORDER BY p.nama_pasien ASC
        LIMIT 20`,
-      [like, like]
+      [like, like, like]
     );
 
     return res.json(rows);

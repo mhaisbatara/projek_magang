@@ -1,0 +1,270 @@
+@import '../styles/theme.css';
+
+/* ==========================================================================
+   PendaftaranPasien.css — premium revamp
+   ========================================================================== */
+
+/* Page heading animation */
+.tracking-tight {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Card glassmorphism & layout */
+.rounded-xl.border.border-border.bg-surface-2.p-6.shadow-sm {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--border-soft) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 26px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rounded-xl.border.border-border.bg-surface-2.p-6.shadow-sm:hover {
+  box-shadow: 0 10px 30px rgba(31, 36, 48, 0.12) !important;
+}
+
+/* Form input, select, textarea styling */
+input.w-full.rounded-lg.border.border-border,
+select.w-full.rounded-lg.border.border-border,
+textarea.w-full.rounded-lg.border.border-border {
+  background: rgba(248, 246, 253, 0.6) !important;
+  border: 1.5px solid var(--border-soft) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 11px 15px !important;
+  font-size: 14px !important;
+  color: var(--text-primary) !important;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+input.w-full.rounded-lg.border.border-border:focus,
+select.w-full.rounded-lg.border.border-border:focus,
+textarea.w-full.rounded-lg.border.border-border:focus {
+  background: #ffffff !important;
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 4px rgba(50, 102, 240, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.01) !important;
+  outline: none !important;
+}
+
+/* Label styling */
+label.block.text-sm.text-text-secondary {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #555c6d !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 7px !important;
+}
+
+/* Main Tab Switcher (Pendaftaran vs Antrean vs Antrian Awal) */
+.mt-5.mb-6.flex.gap-1\.5.p-1.bg-surface-1.rounded-xl.w-fit.border.border-border.shadow-xs {
+  background: rgba(214, 203, 240, 0.4) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-soft) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 6px !important;
+  gap: 6px !important;
+  box-shadow: none !important;
+}
+
+.mt-5.mb-6.flex.gap-1\.5.p-1.bg-surface-1.rounded-xl.w-fit.border.border-border.shadow-xs button {
+  border-radius: var(--radius-sm) !important;
+  padding: 10px 22px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mt-5.mb-6.flex.gap-1\.5.p-1.bg-surface-1.rounded-xl.w-fit.border.border-border.shadow-xs button.bg-surface-2 {
+  background: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(31, 36, 48, 0.08) !important;
+  color: var(--accent-blue) !important;
+}
+
+.mt-5.mb-6.flex.gap-1\.5.p-1.bg-surface-1.rounded-xl.w-fit.border.border-border.shadow-xs button:not(.bg-surface-2) {
+  color: var(--text-secondary) !important;
+}
+
+.mt-5.mb-6.flex.gap-1\.5.p-1.bg-surface-1.rounded-xl.w-fit.border.border-border.shadow-xs button:not(.bg-surface-2):hover {
+  background: rgba(255, 255, 255, 0.4) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Sub-Tab Switcher (Pasien Baru vs Pasien Lama) */
+.inline-flex.rounded-lg.bg-surface-1.p-1 {
+  background: rgba(214, 203, 240, 0.4) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 5px !important;
+  gap: 4px;
+  border: 1px solid var(--border-soft) !important;
+}
+
+.inline-flex.rounded-lg.bg-surface-1.p-1 button {
+  border-radius: 8px !important;
+  padding: 8px 18px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease;
+}
+
+.inline-flex.rounded-lg.bg-surface-1.p-1 button.bg-surface-2 {
+  background: #ffffff !important;
+  color: var(--accent-blue) !important;
+  box-shadow: 0 2px 6px rgba(31, 36, 48, 0.06) !important;
+}
+
+/* Patient Search Dropdown */
+.search-dropdown {
+  position: absolute;
+  z-index: 50;
+  width: 100%;
+  margin-top: 4px;
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.search-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.search-item:hover {
+  background: var(--accent-blue-soft);
+}
+
+/* Print Ticket Design */
+.ticket-container {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  color: #1f2430;
+}
+
+/* ==========================================================================
+   Antrean Poliklinik — bring this tab's cards up to the same premium look
+   as the Pendaftaran tab (glass background, soft shadow, rounded scale).
+   Previously bg-card-bg / border-border-soft had no matching rule here,
+   so those cards rendered flat/plain next to the Pendaftaran cards.
+   ========================================================================== */
+.bg-card-bg {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.border-border-soft {
+  border-color: var(--border-soft) !important;
+}
+
+.bg-card-bg.border.border-border-soft.rounded-xl.shadow-sm,
+.card-examine {
+  box-shadow: var(--shadow-card) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Poli selector pills: consistent height + clearer inactive state */
+.mt-6.flex.flex-wrap.gap-3 > button {
+  min-height: 44px;
+}
+
+.mt-6.flex.flex-wrap.gap-3 > button:not(.bg-blue-600) {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(8px);
+}
+
+/* Active Patient Panel */
+.card-examine {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-examine::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 5px; height: 100%;
+  background: linear-gradient(180deg, var(--accent-blue), #818cf8);
+}
+
+.card-examine:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(50, 102, 240, 0.15) !important;
+}
+
+/* Active Queue Number Pulsing */
+@keyframes callPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(50, 102, 240, 0.25);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(50, 102, 240, 0);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(50, 102, 240, 0);
+    transform: scale(1);
+  }
+}
+
+.queue-active-num {
+  display: inline-block;
+  animation: callPulse 2s infinite ease-in-out;
+  font-family: monospace;
+}
+
+/* Patient List Items */
+.antrian-item {
+  transition: all 0.2s ease;
+}
+
+.antrian-item:hover {
+  transform: translateX(4px);
+  border-color: rgba(50, 102, 240, 0.35) !important;
+  background-color: var(--accent-blue-soft) !important;
+}
+
+/* ==========================================================================
+   Antrian Awal — grid tombol nomor 01-50
+   ========================================================================== */
+.antrian-awal-num {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-family: monospace;
+}
+
+.antrian-awal-num:hover {
+  box-shadow: 0 4px 12px rgba(31, 36, 48, 0.08);
+}
+
+.antrian-awal-num:active {
+  transform: scale(0.94);
+}
+
+/* Custom Scrollbars */
+main::-webkit-scrollbar {
+  width: 8px;
+}
+
+main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+main::-webkit-scrollbar-thumb {
+  background-color: var(--border-soft);
+  border-radius: 999px;
+}
+
+main::-webkit-scrollbar-thumb:hover {
+  background-color: var(--border);
+}

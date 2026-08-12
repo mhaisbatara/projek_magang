@@ -1,17 +1,17 @@
 :root {
-  --bg-page: #f5f3fc;
+  --bg-page: #e3dcf6;
   --card-bg: #ffffff;
   --border-outer: #cabdf7;
-  --border-soft: #ecebf5;
+  --border-soft: #d6cbf0;
+  --border: #b9a9e6;
 
   --text-primary: #1f2430;
   --text-secondary: #868c9c;
   --text-muted: #b0b4c0;
 
-  --surface-0: #f5f3fc;
-  --surface-1: #ecebf5;
+  --surface-0: #e3dcf6;
+  --surface-1: #d6cbf0;
   --surface-2: #ffffff;
-  --border: #ecebf5;
 
   --sidebar-active-bg: #d9f7e6;
   --sidebar-active-text: #16794f;
@@ -29,5 +29,5 @@
   --radius-md: 14px;
   --radius-sm: 10px;
 
-  --shadow-card: 0 1px 2px rgba(31, 36, 48, 0.04), 0 6px 16px rgba(31, 36, 48, 0.06);
+  --shadow-card: 0 2px 6px rgba(31, 36, 48, 0.08), 0 14px 30px rgba(31, 36, 48, 0.12);
 }

@@ -1,71 +1,215 @@
-.card-examine {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+@import '../styles/theme.css';
+
+/* ==========================================================================
+   PelayananMedis.css — premium styles
+   ========================================================================== */
+
+/* Layout grid */
+.medis-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 24px;
+  align-items: start;
+  padding-bottom: 40px;
 }
 
-.card-examine:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(50, 102, 240, 0.12),
-              0 8px 10px -6px rgba(50, 102, 240, 0.12);
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.antrian-item {
-  animation: slideIn 0.3s ease-out forwards;
-}
-
-.antrian-item:nth-child(1) { animation-delay: 0.02s; }
-.antrian-item:nth-child(2) { animation-delay: 0.06s; }
-.antrian-item:nth-child(3) { animation-delay: 0.10s; }
-.antrian-item:nth-child(4) { animation-delay: 0.14s; }
-.antrian-item:nth-child(5) { animation-delay: 0.18s; }
-.antrian-item:nth-child(n+6) { animation-delay: 0.22s; }
-
-@keyframes callPulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(50, 102, 240, 0.35);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(50, 102, 240, 0);
-    transform: scale(1.03);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(50, 102, 240, 0);
-    transform: scale(1);
+@media (max-width: 1024px) {
+  .medis-layout {
+    grid-template-columns: 1fr;
   }
 }
 
-.queue-active-num {
-  animation: callPulse 2.5s infinite ease-in-out;
+/* Sidebar List Card */
+.medis-sidebar {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+/* Patient Form Card */
+.medis-form-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+}
+
+/* Sections divider */
+.medis-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-b: 1px solid var(--border-soft);
+}
+
+.medis-section-title:first-of-type {
+  margin-top: 0;
+}
+
+/* Vitals Grid */
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.vitals-input-wrapper {
+  position: relative;
+}
+
+.vitals-unit {
+  position: absolute;
+  right: 12px;
+  bottom: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.vitals-input-wrapper input {
+  padding-right: 45px !important;
+}
+
+/* SOAP Textareas */
+.soap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+  .soap-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Autocomplete suggestions */
+.icd-suggestions {
+  position: absolute;
+  z-index: 50;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
-  display: inline-block;
-  background-color: var(--accent-blue-soft);
-  padding: 4px 18px;
+  box-shadow: var(--shadow-card);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 4px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+.icd-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.35s ease-out forwards;
+.icd-item:hover {
+  background: var(--accent-blue-soft);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .card-examine:hover { transform: none; }
-  .antrian-item,
-  .queue-active-num,
-  .animate-fade-in { animation: none; }
+/* Prescription table */
+.resep-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 13.5px;
+}
+
+.resep-table th {
+  text-align: left;
+  padding: 10px;
+  background: var(--accent-blue-soft);
+  color: var(--accent-blue);
+  font-weight: 700;
+  border-bottom: 2px solid var(--border-soft);
+}
+
+.resep-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+}
+
+/* Patient History Timeline */
+.history-panel {
+  background: rgba(248, 246, 253, 0.4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-soft);
+  padding: 18px;
+  margin-top: 24px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.history-item {
+  position: relative;
+  padding-left: 20px;
+  padding-bottom: 20px;
+  border-left: 2px solid var(--border);
+}
+
+.history-item:last-child {
+  padding-bottom: 0;
+  border-left: none;
+}
+
+.history-item::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  border: 2px solid #ffffff;
+}
+
+.history-date {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.history-doc {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.history-soap {
+  font-size: 12.5px;
+  color: #4a505e;
+  margin-top: 6px;
+  background: #ffffff;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-soft);
+}
+
+/* Pulsing queue numbers */
+.pulse-active {
+  animation: miniPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes miniPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
 }
