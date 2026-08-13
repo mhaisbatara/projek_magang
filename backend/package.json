@@ -9,12 +9,17 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "joi": "^18.2.3",
     "jose": "^6.2.8",
     "knex": "^3.3.0",
+    "minio": "^8.0.7",
     "morgan": "^1.11.0",
-    "mysql2": "^3.23.3"
+    "mysql2": "^3.23.3",
+    "nodemailer": "^9.0.5"
   },
   "devDependencies": {
     "eslint": "^10.8.1",
