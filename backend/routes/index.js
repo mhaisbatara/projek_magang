@@ -14,6 +14,8 @@ import Dashboard from "./dashboard/index.js";
 import Farmasi from "./penunjang-medis/farmasi/index.js";
 import Laboratorium from "./penunjang-medis/laboratorium/index.js";
 import PelayananMedis from "./pelayanan-medis/index.js";
+import Kasir from "./kasir-keuangan/kasir/index.js";
+import Keuangan from "./kasir-keuangan/keuangan/index.js";
 
 import {
   contextMiddleware,
@@ -32,6 +34,8 @@ router.use("/dashboard", Dashboard);
 router.use("/farmasi", Farmasi);
 router.use("/laboratorium", Laboratorium);
 router.use("/pelayanan-medis", PelayananMedis);
+router.use("/kasir", Kasir);
+router.use("/keuangan", Keuangan);
 
 // Tambahkan modul lain di sini, contoh:
 // import Pasien from "./pasien/index.js";
