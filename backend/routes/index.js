@@ -9,6 +9,7 @@ import RefreshToken from "./auth/refresh_token.js";
 import Login from "./auth/login.js";
 import AntrianAwal from "./antrian-awal/index.js"; 
 import Pasien from "./pasien/index.js"; 
+import AntrianPoli from "./antrian-poli/index.js"; 
 
 import {
   contextMiddleware,
@@ -22,6 +23,7 @@ router.use("/auth/refresh-token", [], RefreshToken);
 router.use("/auth/login", [], Login);
 router.use("/antrian-awal", AntrianAwal);
 router.use("/pasien", Pasien);
+router.use("/antrian-poli", AntrianPoli);
 
 // Tambahkan modul lain di sini, contoh:
 // import Pasien from "./pasien/index.js";

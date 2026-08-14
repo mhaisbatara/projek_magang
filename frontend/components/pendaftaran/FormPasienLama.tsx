@@ -13,7 +13,6 @@ type PasienResult = {
   tanggal_lahir: string | null;
   jenis_kelamin: string | null;
   no_hp: string | null;
-  kode_penjamin: string | null;
 };
 
 export default function FormPasienLama() {
@@ -61,7 +60,6 @@ export default function FormPasienLama() {
 
   const pilihPasien = (p: PasienResult) => {
     setSelected(p);
-    setKodePenjamin(p.kode_penjamin || "");
     setResults([]);
     setQuery(`${p.nama_pasien} (${p.no_rm})`);
   };

@@ -77,8 +77,7 @@ async function search(req, res) {
         "nama_pasien",
         "tanggal_lahir",
         "jenis_kelamin",
-        "no_hp",
-        "kode_penjamin"
+        "no_hp"
       )
       .where("no_rm", "like", `%${q}%`)
       .orWhere("nik", "like", `%${q}%`)
@@ -147,7 +146,6 @@ async function daftarBaru(req, res) {
       detail_alamat: body.detail_alamat,
       kode_pos: body.kode_pos || null,
       no_hp: body.no_hp || null,
-      kode_penjamin: body.kode_penjamin || null,
     };
     await knex(TABLE).insert(patientPayload);
 
@@ -158,13 +156,15 @@ async function daftarBaru(req, res) {
 
     const trxPayload = {
       id: trxId,
-      kode_antrian: active_kode_antrian || null,
       no_antrian: noAntrianPoli,
       no_rm: no_rm,
       kode_poli: body.kode_poli,
       tanggal: todayStr,
       status_panggil: "menunggu",
     };
+    if (body.kode_penjamin !== undefined) {
+      trxPayload.kode_penjamin = body.kode_penjamin;
+    }
     await knex("trx_antrian").insert(trxPayload);
 
     res.json({
@@ -216,14 +216,14 @@ async function daftarLama(req, res) {
       }
     }
 
-    // 1. Update patient master's kode_antrian and kode_penjamin
-    const updates = {
-      kode_penjamin: body.kode_penjamin || existing.kode_penjamin,
-    };
+    // 1. Update patient master's kode_antrian (if there is an active called ticket)
+    const updates = {};
     if (active_kode_antrian) {
       updates.kode_antrian = active_kode_antrian;
     }
-    await knex(TABLE).where({ no_rm: body.no_rm }).update(updates);
+    if (Object.keys(updates).length > 0) {
+      await knex(TABLE).where({ no_rm: body.no_rm }).update(updates);
+    }
 
     // 2. Insert transaction queue (trx_antrian)
     const trxId = await generateTrxId();
@@ -232,13 +232,15 @@ async function daftarLama(req, res) {
 
     const trxPayload = {
       id: trxId,
-      kode_antrian: active_kode_antrian || null,
       no_antrian: noAntrianPoli,
       no_rm: body.no_rm,
       kode_poli: body.kode_poli,
       tanggal: todayStr,
       status_panggil: "menunggu",
     };
+    if (body.kode_penjamin !== undefined) {
+      trxPayload.kode_penjamin = body.kode_penjamin;
+    }
     await knex("trx_antrian").insert(trxPayload);
 
     res.json({
@@ -254,4 +256,97 @@ async function daftarLama(req, res) {
   }
 }
 
-export { search, daftarBaru, daftarLama, getPoli };
+// POST /pasien/poli -> tambah poli baru
+async function createPoli(req, res) {
+  const { kode_poli, nama_poli } = req.body;
+  if (!nama_poli) {
+    return res.status(400).json({ success: false, message: "Nama poli wajib diisi" });
+  }
+
+  try {
+    let final_kode_poli = kode_poli;
+    if (!final_kode_poli) {
+      // Auto-generate kode_poli: POLxx
+      const last = await knex("mst_poli")
+        .where("kode_poli", "like", "POL%")
+        .orderBy("kode_poli", "desc")
+        .first();
+      let nextNum = 1;
+      if (last) {
+        const match = last.kode_poli.match(/^POL(\d+)$/);
+        if (match) {
+          nextNum = parseInt(match[1], 10) + 1;
+        }
+      }
+      final_kode_poli = "POL" + String(nextNum).padStart(2, "0");
+    }
+
+    const exist = await knex("mst_poli").where({ kode_poli: final_kode_poli }).first();
+    if (exist) {
+      return res.status(400).json({ success: false, message: `Kode poli ${final_kode_poli} sudah terdaftar` });
+    }
+
+    await knex("mst_poli").insert({
+      id: final_kode_poli,
+      kode_poli: final_kode_poli,
+      nama_poli,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Poli berhasil ditambahkan",
+      data: { id: final_kode_poli, kode_poli: final_kode_poli, nama_poli }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+// PUT /pasien/poli/:kode_poli -> edit nama poli
+async function updatePoli(req, res) {
+  const { kode_poli } = req.params;
+  const { nama_poli } = req.body;
+  if (!nama_poli) {
+    return res.status(400).json({ success: false, message: "Nama poli wajib diisi" });
+  }
+
+  try {
+    const exist = await knex("mst_poli").where({ kode_poli }).first();
+    if (!exist) {
+      return res.status(404).json({ success: false, message: "Poli tidak ditemukan" });
+    }
+
+    await knex("mst_poli").where({ kode_poli }).update({ nama_poli });
+    res.json({ success: true, message: "Poli berhasil diperbarui" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+// DELETE /pasien/poli/:kode_poli -> hapus poli
+async function deletePoli(req, res) {
+  const { kode_poli } = req.params;
+
+  try {
+    const exist = await knex("mst_poli").where({ kode_poli }).first();
+    if (!exist) {
+      return res.status(404).json({ success: false, message: "Poli tidak ditemukan" });
+    }
+
+    // Check if there are patient visits referencing this clinic
+    const hasVisits = await knex("trx_antrian").where({ kode_poli }).first();
+    if (hasVisits) {
+      return res.status(400).json({
+        success: false,
+        message: "Poli tidak dapat dihapus karena sudah memiliki riwayat kunjungan antrean"
+      });
+    }
+
+    await knex("mst_poli").where({ kode_poli }).del();
+    res.json({ success: true, message: "Poli berhasil dihapus" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+export { search, daftarBaru, daftarLama, getPoli, createPoli, updatePoli, deletePoli };
