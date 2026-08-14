@@ -13,6 +13,7 @@ import AntrianPoli from "./antrian-poli/index.js";
 import Dashboard from "./dashboard/index.js";
 import Farmasi from "./penunjang-medis/farmasi/index.js";
 import Laboratorium from "./penunjang-medis/laboratorium/index.js";
+import PelayananMedis from "./pelayanan-medis/index.js";
 
 import {
   contextMiddleware,
@@ -30,6 +31,7 @@ router.use("/antrian-poli", AntrianPoli);
 router.use("/dashboard", Dashboard);
 router.use("/farmasi", Farmasi);
 router.use("/laboratorium", Laboratorium);
+router.use("/pelayanan-medis", PelayananMedis);
 
 // Tambahkan modul lain di sini, contoh:
 // import Pasien from "./pasien/index.js";

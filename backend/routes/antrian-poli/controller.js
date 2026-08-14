@@ -2,6 +2,57 @@ import knex from "../../core/config/knex.js";
 
 const TABLE = "trx_antrian";
 
+function pad(num, size) {
+  let s = String(num);
+  while (s.length < size) s = "0" + s;
+  return s;
+}
+
+// Pastikan setiap kali pasien dipanggil masuk poli, ada baris trx_kunjungan
+// berstatus 'diperiksa' supaya langsung muncul di halaman Pemeriksaan Dokter.
+async function ensureKunjungan(antrianRow) {
+  const existing = await knex("trx_kunjungan").where({ kode_antrian: antrianRow.id }).first();
+  if (existing) {
+    if (existing.status_kunjungan === "menunggu") {
+      await knex("trx_kunjungan")
+        .where({ id: existing.id })
+        .update({ status_kunjungan: "diperiksa", jam_masuk: new Date() });
+    }
+    return;
+  }
+
+  const today = new Date();
+  const yymmdd = today.toISOString().slice(2, 10).replace(/-/g, "");
+  const yyyymmdd = today.toISOString().slice(0, 10).replace(/-/g, "");
+  const prefix = "TRK" + yymmdd;
+
+  const last = await knex("trx_kunjungan")
+    .where("id", "like", `${prefix}%`)
+    .orderBy("id", "desc")
+    .first();
+
+  let nextNum = 1;
+  if (last) {
+    const match = last.id.match(new RegExp(`^${prefix}(\\d+)$`));
+    if (match) nextNum = parseInt(match[1], 10) + 1;
+  }
+
+  const dokter = await knex("mst_dokter").where({ kode_poli: antrianRow.kode_poli }).first();
+
+  await knex("trx_kunjungan").insert({
+    id: prefix + pad(nextNum, 4),
+    kode_kunjungan: `KJG-${yyyymmdd}-${pad(nextNum, 4)}`,
+    kode_antrian: antrianRow.id,
+    no_rm: antrianRow.no_rm,
+    kode_poli: antrianRow.kode_poli,
+    no_sip: dokter ? dokter.no_sip : null,
+    kode_penjamin: antrianRow.kode_penjamin || null,
+    tanggal_kunjungan: antrianRow.tanggal,
+    jam_masuk: new Date(),
+    status_kunjungan: "diperiksa",
+  });
+}
+
 // GET /api/antrian-poli?kode_poli=...&tanggal=...
 async function getAll(req, res) {
   const { kode_poli, tanggal } = req.query;
@@ -57,6 +108,9 @@ async function panggilAntrian(req, res) {
     await knex(TABLE).where({ id }).update({
       status_panggil: "dipanggil",
     });
+
+    // Siapkan data kunjungan supaya siap diperiksa dokter
+    await ensureKunjungan(exist);
 
     res.json({ 
       success: true, 

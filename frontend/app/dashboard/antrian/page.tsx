@@ -413,10 +413,18 @@ export default function AntrianPoliPage() {
             {polis.map((poli) => {
               const isSelected = selectedPoli === poli.kode_poli;
               return (
-                <button
+                <div
                   key={poli.kode_poli}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedPoli(poli.kode_poli)}
-                  className={`relative p-4 rounded-2xl text-left border transition-all duration-200 group/poli ${
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedPoli(poli.kode_poli);
+                    }
+                  }}
+                  className={`relative p-4 rounded-2xl text-left border transition-all duration-200 group/poli cursor-pointer select-none ${
                     isSelected
                       ? "bg-white border-emerald-500 shadow-md ring-2 ring-emerald-50"
                       : "bg-white border-gray-200 hover:border-emerald-200 hover:shadow-xs"
@@ -461,7 +469,7 @@ export default function AntrianPoliPage() {
                     </h3>
                     <p className="text-[11px] text-gray-400 mt-0.5">Poliklinik Rawat Jalan</p>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
