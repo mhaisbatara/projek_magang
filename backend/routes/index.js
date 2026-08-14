@@ -7,10 +7,12 @@
 import express from "express";
 import RefreshToken from "./auth/refresh_token.js";
 import Login from "./auth/login.js";
-import AntrianAwal from "./antrian-awal/index.js"; 
-import Pasien from "./pasien/index.js"; 
-import AntrianPoli from "./antrian-poli/index.js"; 
+import AntrianAwal from "./antrian-awal/index.js";
+import Pasien from "./pasien/index.js";
+import AntrianPoli from "./antrian-poli/index.js";
 import Dashboard from "./dashboard/index.js";
+import Farmasi from "./penunjang-medis/farmasi/index.js";
+import Laboratorium from "./penunjang-medis/laboratorium/index.js";
 
 import {
   contextMiddleware,
@@ -26,6 +28,8 @@ router.use("/antrian-awal", AntrianAwal);
 router.use("/pasien", Pasien);
 router.use("/antrian-poli", AntrianPoli);
 router.use("/dashboard", Dashboard);
+router.use("/farmasi", Farmasi);
+router.use("/laboratorium", Laboratorium);
 
 // Tambahkan modul lain di sini, contoh:
 // import Pasien from "./pasien/index.js";

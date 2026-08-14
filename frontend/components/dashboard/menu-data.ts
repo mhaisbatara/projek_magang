@@ -54,8 +54,8 @@ export const menuData: MenuItem[] = [
     label: "Penunjang Medis",
     icon: FlaskConical,
     children: [
-      { label: "Farmasi", icon: Pill, href: "/dashboard/farmasi" },
-      { label: "Laboratorium", icon: FlaskConical, href: "/dashboard/laboratorium" },
+      { label: "Farmasi", icon: Pill, href: "/dashboard/penunjang-medis/farmasi" },
+      { label: "Laboratorium", icon: FlaskConical, href: "/dashboard/penunjang-medis/laboratorium" },
     ],
   },
   {
