@@ -62,8 +62,8 @@ export const menuData: MenuItem[] = [
     label: "Kasir & Keuangan",
     icon: Wallet,
     children: [
-      { label: "Kasir", icon: Receipt, href: "/dashboard/kasir" },
-      { label: "Keuangan", icon: Wallet, href: "/dashboard/keuangan" },
+      { label: "Kasir", icon: Receipt, href: "/dashboard/kasir-keuangan/kasir" },
+      { label: "Keuangan", icon: Wallet, href: "/dashboard/kasir-keuangan/keuangan" },
     ],
   },
   {
