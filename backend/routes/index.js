@@ -10,6 +10,7 @@ import Login from "./auth/login.js";
 import AntrianAwal from "./antrian-awal/index.js"; 
 import Pasien from "./pasien/index.js"; 
 import AntrianPoli from "./antrian-poli/index.js"; 
+import Dashboard from "./dashboard/index.js";
 
 import {
   contextMiddleware,
@@ -24,6 +25,7 @@ router.use("/auth/login", [], Login);
 router.use("/antrian-awal", AntrianAwal);
 router.use("/pasien", Pasien);
 router.use("/antrian-poli", AntrianPoli);
+router.use("/dashboard", Dashboard);
 
 // Tambahkan modul lain di sini, contoh:
 // import Pasien from "./pasien/index.js";
