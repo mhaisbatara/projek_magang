@@ -8,6 +8,7 @@ import express from "express";
 import RefreshToken from "./auth/refresh_token.js";
 import Login from "./auth/login.js";
 import AntrianAwal from "./antrian-awal/index.js"; 
+import Pasien from "./pasien/index.js"; 
 
 import {
   contextMiddleware,
@@ -20,6 +21,7 @@ const router = express.Router();
 router.use("/auth/refresh-token", [], RefreshToken);
 router.use("/auth/login", [], Login);
 router.use("/antrian-awal", AntrianAwal);
+router.use("/pasien", Pasien);
 
 // Tambahkan modul lain di sini, contoh:
 // import Pasien from "./pasien/index.js";
